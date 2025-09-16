@@ -43,7 +43,9 @@
  *
  * @since 1.0.0
  */
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import type { ILoggerService } from '@aiofix/logging';
+import { LogContext } from '@aiofix/logging';
 import { ModuleRef } from '@nestjs/core';
 import type { ICommandBus, IQueryBus, IEventBus } from '../interfaces';
 import { IExplorerResult, IHandlerInfo } from './core-explorer.service';
@@ -158,11 +160,11 @@ export interface IRegistrationOptions {
  */
 @Injectable()
 export class AutoRegistrationService {
-  private readonly logger = new Logger(AutoRegistrationService.name);
   private registrationStatus: IRegistrationStatus | null = null;
 
   constructor(
     private readonly moduleRef: ModuleRef,
+    private readonly logger: ILoggerService,
     private readonly commandBus?: ICommandBus,
     private readonly queryBus?: IQueryBus,
     private readonly eventBus?: IEventBus,
@@ -191,7 +193,7 @@ export class AutoRegistrationService {
       ...options,
     };
 
-    this.logger.log('Starting handler registration...');
+    this.logger.info('Starting handler registration...', LogContext.SYSTEM);
 
     // 初始化注册状态
     this.registrationStatus = {
@@ -274,16 +276,28 @@ export class AutoRegistrationService {
       this.registrationStatus!.completed = true;
       this.registrationStatus!.registrationTime = Date.now() - startTime;
 
-      this.logger.log(
+      this.logger.info(
         `Handler registration completed in ${this.registrationStatus.registrationTime}ms`,
+        LogContext.SYSTEM,
+        { registrationTime: this.registrationStatus.registrationTime },
       );
-      this.logger.log(
+      this.logger.info(
         `Registered: ${this.registrationStatus.registeredHandlers}, Failed: ${this.registrationStatus.failedHandlers}`,
+        LogContext.SYSTEM,
+        {
+          registeredHandlers: this.registrationStatus.registeredHandlers,
+          failedHandlers: this.registrationStatus.failedHandlers,
+        },
       );
 
       return this.registrationStatus;
     } catch (error) {
-      this.logger.error('Handler registration failed:', error);
+      this.logger.error(
+        'Handler registration failed',
+        LogContext.SYSTEM,
+        {},
+        error as Error,
+      );
       throw error;
     }
   }
@@ -307,11 +321,18 @@ export class AutoRegistrationService {
     options: IRegistrationOptions,
   ): Promise<void> {
     if (!this.commandBus) {
-      this.logger.warn('Command bus not available, skipping command handlers');
+      this.logger.warn(
+        'Command bus not available, skipping command handlers',
+        LogContext.SYSTEM,
+      );
       return;
     }
 
-    this.logger.log(`Registering ${handlers.length} command handlers...`);
+    this.logger.info(
+      `Registering ${handlers.length} command handlers...`,
+      LogContext.SYSTEM,
+      { handlerCount: handlers.length },
+    );
 
     for (const handler of handlers) {
       try {
@@ -334,7 +355,11 @@ export class AutoRegistrationService {
         this.registrationStatus!.registeredHandlers++;
         this.registrationStatus!.details.commandHandlers.registered++;
 
-        this.logger.debug(`Registered command handler: ${handler.handlerName}`);
+        this.logger.debug(
+          `Registered command handler: ${handler.handlerName}`,
+          LogContext.SYSTEM,
+          { handlerName: handler.handlerName },
+        );
       } catch (error) {
         this.handleRegistrationError(handler, error as Error, 'command');
       }
@@ -351,11 +376,18 @@ export class AutoRegistrationService {
     options: IRegistrationOptions,
   ): Promise<void> {
     if (!this.queryBus) {
-      this.logger.warn('Query bus not available, skipping query handlers');
+      this.logger.warn(
+        'Query bus not available, skipping query handlers',
+        LogContext.SYSTEM,
+      );
       return;
     }
 
-    this.logger.log(`Registering ${handlers.length} query handlers...`);
+    this.logger.info(
+      `Registering ${handlers.length} query handlers...`,
+      LogContext.SYSTEM,
+      { handlerCount: handlers.length },
+    );
 
     for (const handler of handlers) {
       try {
@@ -378,7 +410,11 @@ export class AutoRegistrationService {
         this.registrationStatus!.registeredHandlers++;
         this.registrationStatus!.details.queryHandlers.registered++;
 
-        this.logger.debug(`Registered query handler: ${handler.handlerName}`);
+        this.logger.debug(
+          `Registered query handler: ${handler.handlerName}`,
+          LogContext.SYSTEM,
+          { handlerName: handler.handlerName },
+        );
       } catch (error) {
         this.handleRegistrationError(handler, error as Error, 'query');
       }
@@ -395,11 +431,18 @@ export class AutoRegistrationService {
     options: IRegistrationOptions,
   ): Promise<void> {
     if (!this.eventBus) {
-      this.logger.warn('Event bus not available, skipping event handlers');
+      this.logger.warn(
+        'Event bus not available, skipping event handlers',
+        LogContext.SYSTEM,
+      );
       return;
     }
 
-    this.logger.log(`Registering ${handlers.length} event handlers...`);
+    this.logger.info(
+      `Registering ${handlers.length} event handlers...`,
+      LogContext.SYSTEM,
+      { handlerCount: handlers.length },
+    );
 
     for (const handler of handlers) {
       try {
@@ -422,7 +465,11 @@ export class AutoRegistrationService {
         this.registrationStatus!.registeredHandlers++;
         this.registrationStatus!.details.eventHandlers.registered++;
 
-        this.logger.debug(`Registered event handler: ${handler.handlerName}`);
+        this.logger.debug(
+          `Registered event handler: ${handler.handlerName}`,
+          LogContext.SYSTEM,
+          { handlerName: handler.handlerName },
+        );
       } catch (error) {
         this.handleRegistrationError(handler, error as Error, 'event');
       }
@@ -438,7 +485,11 @@ export class AutoRegistrationService {
     handlers: IHandlerInfo[],
     options: IRegistrationOptions,
   ): Promise<void> {
-    this.logger.log(`Registering ${handlers.length} saga handlers...`);
+    this.logger.info(
+      `Registering ${handlers.length} saga handlers...`,
+      LogContext.SYSTEM,
+      { handlerCount: handlers.length },
+    );
 
     for (const handler of handlers) {
       try {
@@ -455,7 +506,11 @@ export class AutoRegistrationService {
 
         // 注册 Saga 处理器（这里需要实现具体的 Saga 管理器）
         // 暂时只记录日志
-        this.logger.debug(`Registered saga handler: ${handler.handlerName}`);
+        this.logger.debug(
+          `Registered saga handler: ${handler.handlerName}`,
+          LogContext.SYSTEM,
+          { handlerName: handler.handlerName },
+        );
 
         // 更新状态
         this.registrationStatus!.registeredHandlers++;
@@ -489,8 +544,9 @@ export class AutoRegistrationService {
       return true;
     } catch (error) {
       this.logger.warn(
-        `Handler validation failed for ${handler.handlerName}:`,
-        (error as Error).message,
+        `Handler validation failed for ${handler.handlerName}: ${(error as Error).message}`,
+        LogContext.SYSTEM,
+        { handlerName: handler.handlerName, error: (error as Error).message },
       );
       return false;
     }
@@ -504,10 +560,12 @@ export class AutoRegistrationService {
   private async getHandlerInstance(handler: IHandlerInfo): Promise<any> {
     try {
       return await this.moduleRef.get(handler.handlerClass, { strict: false });
-    } catch (error) {
+    } catch {
       // 如果无法从依赖注入容器获取，尝试直接实例化
       this.logger.warn(
         `Failed to get handler instance from DI container for ${handler.handlerName}, trying direct instantiation`,
+        LogContext.SYSTEM,
+        { handlerName: handler.handlerName },
       );
       return new handler.handlerClass();
     }
@@ -537,7 +595,9 @@ export class AutoRegistrationService {
     });
 
     this.logger.error(
-      `Failed to register ${handlerType} handler ${handler.handlerName}:`,
+      `Failed to register ${handlerType} handler ${handler.handlerName}: ${error.message}`,
+      LogContext.SYSTEM,
+      { handlerName: handler.handlerName, handlerType, error: error.message },
       error,
     );
   }

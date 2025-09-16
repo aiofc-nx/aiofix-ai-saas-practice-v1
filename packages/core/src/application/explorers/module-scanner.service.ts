@@ -7,7 +7,9 @@
  * @description 模块扫描器服务，用于发现和扫描项目模块
  * @since 1.0.0
  */
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import type { ILoggerService } from '@aiofix/logging';
+import { LogContext } from '@aiofix/logging';
 import { Type } from '@nestjs/common';
 import * as path from 'path';
 // import * as fs from 'fs';
@@ -148,7 +150,8 @@ export interface IDependencyGraph {
  */
 @Injectable()
 export class ModuleScannerService {
-  private readonly logger = new Logger(ModuleScannerService.name);
+  constructor(private readonly logger: ILoggerService) {}
+
   private readonly defaultOptions: IScanOptions = {
     depth: 10,
     excludePatterns: ['node_modules', '.git', 'dist', 'build', 'coverage'],
@@ -168,7 +171,9 @@ export class ModuleScannerService {
     options: IScanOptions = {},
   ): Promise<IModuleInfo[]> {
     const mergedOptions = { ...this.defaultOptions, ...options };
-    this.logger.log('Scanning path: ' + scanPath);
+    this.logger.info('Scanning path: ' + scanPath, LogContext.SYSTEM, {
+      scanPath,
+    });
 
     try {
       const moduleFiles = await this.findModuleFiles(scanPath, mergedOptions);
@@ -178,10 +183,19 @@ export class ModuleScannerService {
         await this.analyzeModuleDependencies(modules);
       }
 
-      this.logger.log('Found ' + modules.length + ' modules');
+      this.logger.info(
+        'Found ' + modules.length + ' modules',
+        LogContext.SYSTEM,
+        { moduleCount: modules.length },
+      );
       return modules;
     } catch (error) {
-      this.logger.error('Failed to scan path ' + scanPath + ':', error);
+      this.logger.error(
+        'Failed to scan path ' + scanPath,
+        LogContext.SYSTEM,
+        { scanPath },
+        error as Error,
+      );
       throw error;
     }
   }
@@ -194,7 +208,9 @@ export class ModuleScannerService {
     options: IScanOptions = {},
   ): Promise<IModuleInfo[]> {
     const mergedOptions = { ...this.defaultOptions, ...options };
-    this.logger.log('Scanning pattern: ' + pattern);
+    this.logger.info('Scanning pattern: ' + pattern, LogContext.SYSTEM, {
+      pattern,
+    });
 
     try {
       const moduleFiles = await this.findModuleFilesByPattern(
@@ -207,10 +223,19 @@ export class ModuleScannerService {
         await this.analyzeModuleDependencies(modules);
       }
 
-      this.logger.log('Found ' + modules.length + ' modules matching pattern');
+      this.logger.info(
+        'Found ' + modules.length + ' modules matching pattern',
+        LogContext.SYSTEM,
+        { moduleCount: modules.length, pattern },
+      );
       return modules;
     } catch (error) {
-      this.logger.error('Failed to scan pattern ' + pattern + ':', error);
+      this.logger.error(
+        'Failed to scan pattern ' + pattern,
+        LogContext.SYSTEM,
+        { pattern },
+        error as Error,
+      );
       throw error;
     }
   }
@@ -325,8 +350,12 @@ export class ModuleScannerService {
         }
       } catch (error) {
         this.logger.warn(
-          'Failed to load module from ' + filePath + ':',
-          (error as Error).message,
+          'Failed to load module from ' +
+            filePath +
+            ': ' +
+            (error as Error).message,
+          LogContext.SYSTEM,
+          { filePath, error: (error as Error).message },
         );
       }
     }
@@ -361,8 +390,12 @@ export class ModuleScannerService {
       };
     } catch (error) {
       this.logger.warn(
-        'Failed to load module from file ' + filePath + ':',
-        (error as Error).message,
+        'Failed to load module from file ' +
+          filePath +
+          ': ' +
+          (error as Error).message,
+        LogContext.SYSTEM,
+        { filePath, error: (error as Error).message },
       );
       return null;
     }

@@ -4322,212 +4322,160 @@ export function RequireTenantIsolation() {
 ```text
 packages/core/
 ├── src/
-│   ├── architecture/              # 架构基础
-│   │   ├── entities/              # 基础实体
-│   │   │   ├── base-entity.ts
-│   │   │   ├── base-aggregate-root.ts
-│   │   │   ├── base-value-object.ts
-│   │   │   └── entity-id.ts
-│   │   ├── commands/              # CQRS 基础
-│   │   │   ├── base-command.ts
-│   │   │   ├── base-command-handler.ts
-│   │   │   ├── command-bus.ts
-│   │   │   └── command-publisher.ts
-│   │   ├── queries/               # 查询基础
-│   │   │   ├── base-query.ts
-│   │   │   ├── base-query-handler.ts
-│   │   │   ├── query-bus.ts
-│   │   │   └── query-publisher.ts
-│   │   ├── events/                # 事件基础
-│   │   │   ├── base-domain-event.ts
-│   │   │   ├── event-handler.ts
-│   │   │   ├── event-bus.ts
-│   │   │   └── event-publisher.ts
-│   │   ├── sagas/                 # Saga 模式
-│   │   │   ├── saga-manager.ts
-│   │   │   ├── saga-step.ts
-│   │   │   └── saga-context.ts
-│   │   ├── event-store/           # 事件存储
-│   │   │   ├── event-store.interface.ts
-│   │   │   ├── event-store.ts
-│   │   │   └── event-stream.ts
-│   │   ├── message-queue/         # 消息队列
-│   │   │   ├── message-queue.interface.ts
-│   │   │   ├── bull-message-queue.ts
-│   │   │   └── queue-handler.decorator.ts
-│   │   ├── decorators/            # CQRS 装饰器
+│   ├── core/                      # 核心架构层
+│   │   ├── cqrs/                  # CQRS 核心
+│   │   │   ├── commands/          # 命令
+│   │   │   │   ├── base/          # 基础命令
+│   │   │   │   │   ├── base-command.ts
+│   │   │   │   │   ├── command-handler.interface.ts
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── handlers/      # 命令处理器
+│   │   │   │   └── index.ts
+│   │   │   ├── queries/           # 查询
+│   │   │   │   ├── base/          # 基础查询
+│   │   │   │   │   ├── base-query.ts
+│   │   │   │   │   ├── base-query-result.ts
+│   │   │   │   │   ├── query-handler.interface.ts
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── handlers/      # 查询处理器
+│   │   │   │   └── index.ts
+│   │   │   ├── events/            # 事件
+│   │   │   │   ├── base/          # 基础事件
+│   │   │   │   │   ├── base-domain-event.ts
+│   │   │   │   │   ├── event-handler.interface.ts
+│   │   │   │   │   └── index.ts
+│   │   │   │   ├── handlers/      # 事件处理器
+│   │   │   │   └── index.ts
+│   │   │   ├── sagas/             # Saga
+│   │   │   │   ├── saga.interface.ts
+│   │   │   │   ├── core-saga.ts
+│   │   │   │   ├── core-saga-manager.ts
+│   │   │   │   └── index.ts
+│   │   │   └── index.ts
+│   │   ├── entities/              # 实体和值对象
+│   │   │   ├── base/              # 基础实体
+│   │   │   │   ├── base-entity.ts
+│   │   │   │   ├── base-aggregate-root.ts
+│   │   │   │   ├── audit-info.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── value-objects/     # 值对象
+│   │   │   └── index.ts
+│   │   ├── decorators/            # 装饰器
 │   │   │   ├── command-handler.decorator.ts
 │   │   │   ├── query-handler.decorator.ts
-│   │   │   ├── events-handler.decorator.ts
+│   │   │   ├── event-handler.decorator.ts
 │   │   │   ├── saga.decorator.ts
-│   │   │   ├── cacheable.decorator.ts
-│   │   │   └── data-isolation.decorator.ts
-│   │   ├── services/              # 核心服务
-│   │   │   ├── core-explorer.service.ts
+│   │   │   ├── metadata.constants.ts
+│   │   │   ├── metadata.interfaces.ts
+│   │   │   ├── metadata.utils.ts
+│   │   │   └── index.ts
+│   │   ├── interfaces/            # 接口定义
+│   │   │   ├── cqrs-bus.interface.ts
+│   │   │   └── index.ts
+│   │   ├── context/               # 上下文管理
+│   │   │   ├── async-context.interface.ts
+│   │   │   ├── async-context-provider.ts
+│   │   │   ├── async-context-middleware.ts
 │   │   │   ├── core-async-context.ts
-│   │   │   └── core-unhandled-exception-bus.ts
-│   │   └── performance/           # 性能监控
-│   │       ├── performance-monitor.interface.ts
-│   │       ├── core-performance-monitor.ts
-│   │       └── performance-monitor.decorator.ts
-│   ├── multi-tenant/              # 多租户支持
-│   │   ├── context/               # 租户上下文
-│   │   │   ├── tenant-context.ts
-│   │   │   ├── tenant-context.decorator.ts
-│   │   │   └── tenant-context.middleware.ts
-│   │   ├── isolation/             # 隔离策略
-│   │   │   ├── isolation-strategy.interface.ts
-│   │   │   ├── isolation-strategy.factory.ts
-│   │   │   └── strategies/
-│   │   │       ├── database-per-tenant.strategy.ts
-│   │   │       ├── schema-per-tenant.strategy.ts
-│   │   │       ├── row-level-security.strategy.ts
-│   │   │       └── shared-database.strategy.ts
-│   │   └── guards/                # 租户守卫
-│   │       ├── tenant-isolation.guard.ts
-│   │       └── tenant-context.guard.ts
-│   ├── data-access/               # 数据访问
-│   │   ├── repositories/          # 仓储基础
-│   │   │   ├── base-repository.interface.ts
-│   │   │   ├── paginated-repository.interface.ts
-│   │   │   └── event-store.interface.ts
-│   │   ├── unit-of-work/          # 工作单元
-│   │   │   ├── unit-of-work.interface.ts
-│   │   │   └── unit-of-work.ts
-│   │   └── specifications/        # 规约模式
-│   │       ├── specification.interface.ts
-│   │       └── base-specification.ts
-│   ├── caching/                   # 缓存层
-│   │   ├── cache.interface.ts
-│   │   ├── redis-cache.ts
-│   │   ├── memory-cache.ts
-│   │   └── decorators/
-│   │       └── cacheable.decorator.ts
-│   ├── logging/                   # 日志监控
-│   │   ├── logger.interface.ts
-│   │   ├── structured-logger.ts
-│   │   ├── decorators/
-│   │   │   └── log-execution.decorator.ts
-│   │   └── middleware/
-│   │       └── request-logging.middleware.ts
-│   ├── monitoring/                # 性能监控
-│   │   ├── metrics-collector.interface.ts
-│   │   ├── prometheus-metrics.ts
-│   │   ├── decorators/
-│   │   │   └── monitor-performance.decorator.ts
-│   │   └── health-check/
-│   │       ├── health-check.interface.ts
-│   │       └── health-check.service.ts
-│   ├── configuration/             # 配置管理
-│   │   ├── configuration.interface.ts
-│   │   ├── environment-configuration.ts
-│   │   ├── decorators/
-│   │   │   └── config-value.decorator.ts
-│   │   └── validators/
-│   │       └── configuration.validator.ts
-│   ├── security/                  # 安全层
-│   │   ├── permissions/           # 权限管理
-│   │   │   ├── permission.service.ts
-│   │   │   ├── decorators/
-│   │   │   │   └── require-permission.decorator.ts
-│   │   │   └── guards/
-│   │   │       └── permission.guard.ts
-│   │   ├── authentication/        # 认证
-│   │   │   ├── auth.service.ts
-│   │   │   └── jwt.strategy.ts
-│   │   └── authorization/         # 授权
-│   │       ├── authorization.service.ts
-│   │       └── decorators/
-│   │           └── require-tenant-isolation.decorator.ts
-│   ├── validation/                # 验证层
-│   │   ├── validators/            # 自定义验证器
-│   │   │   ├── tenant-id.validator.ts
-│   │   │   ├── email.validator.ts
-│   │   │   └── phone.validator.ts
-│   │   ├── pipes/                 # 验证管道
-│   │   │   ├── validation.pipe.ts
-│   │   │   └── tenant-context.pipe.ts
-│   │   └── decorators/            # 验证装饰器
-│   │       └── validate-tenant.decorator.ts
-│   ├── exceptions/                # 异常处理
-│   │   ├── base-exception.ts
-│   │   ├── business-exception.ts
-│   │   ├── validation-exception.ts
-│   │   ├── tenant-isolation-exception.ts
-│   │   └── filters/
-│   │       ├── global-exception.filter.ts
-│   │       └── tenant-exception.filter.ts
-│   ├── decorators/                # 通用装饰器
-│   │   ├── retry.decorator.ts
-│   │   ├── timeout.decorator.ts
-│   │   ├── circuit-breaker.decorator.ts
-│   │   └── rate-limit.decorator.ts
-│   ├── interceptors/              # 通用拦截器
-│   │   ├── logging.interceptor.ts
-│   │   ├── performance.interceptor.ts
-│   │   ├── tenant-context.interceptor.ts
-│   │   └── error-handling.interceptor.ts
-│   ├── middleware/                # 通用中间件
-│   │   ├── request-id.middleware.ts
-│   │   ├── correlation-id.middleware.ts
-│   │   ├── tenant-context.middleware.ts
-│   │   └── security-headers.middleware.ts
-│   ├── utils/                     # 工具函数
-│   │   ├── date.utils.ts
-│   │   ├── string.utils.ts
-│   │   ├── validation.utils.ts
-│   │   ├── encryption.utils.ts
-│   │   └── serialization.utils.ts
-│   ├── types/                     # 类型定义
-│   │   ├── common.types.ts
-│   │   ├── tenant.types.ts
-│   │   ├── pagination.types.ts
-│   │   ├── api.types.ts
-│   │   ├── cqrs.types.ts
-│   │   ├── performance.types.ts
-│   │   └── testing.types.ts
-│   ├── constants/                 # 常量定义
-│   │   ├── error-codes.ts
-│   │   ├── event-types.ts
-│   │   ├── permission-types.ts
-│   │   ├── tenant-types.ts
-│   │   ├── cqrs-metadata.ts
-│   │   └── performance-metrics.ts
-│   ├── testing/                   # 测试支持
-│   │   ├── core-testing.module.ts
-│   │   ├── core-test.utils.ts
-│   │   ├── core-test.base.ts
-│   │   ├── mocks/                 # 模拟对象
-│   │   │   ├── in-memory-event-store.ts
-│   │   │   ├── in-memory-saga-manager.ts
-│   │   │   ├── in-memory-message-queue.ts
-│   │   │   ├── in-memory-cache-service.ts
-│   │   │   ├── in-memory-database-adapter.ts
-│   │   │   └── in-memory-performance-monitor.ts
-│   │   └── fixtures/              # 测试数据
-│   │       ├── test-commands.ts
-│   │       ├── test-queries.ts
-│   │       ├── test-events.ts
-│   │       └── test-entities.ts
-│   ├── fastify/                   # Fastify 集成
-│   │   ├── fastify-adapter.ts
-│   │   ├── fastify.module.ts
-│   │   ├── plugins/               # Fastify 插件
-│   │   │   ├── cors.plugin.ts
-│   │   │   ├── helmet.plugin.ts
-│   │   │   ├── rate-limit.plugin.ts
-│   │   │   ├── swagger.plugin.ts
-│   │   │   └── websocket.plugin.ts
-│   │   └── middleware/            # Fastify 中间件
-│   │       ├── request-id.middleware.ts
-│   │       ├── tenant-context.middleware.ts
-│   │       ├── performance-monitoring.middleware.ts
-│   │       └── error-handling.middleware.ts
-│   ├── mongodb/                   # MongoDB 支持
-│   │   ├── mongodb-adapter.ts
-│   │   ├── mongodb.module.ts
-│   │   ├── mongodb.config.ts
-│   │   └── mongodb.types.ts
+│   │   │   ├── core-async-context-manager.ts
+│   │   │   └── index.ts
+│   │   ├── error/                 # 错误处理
+│   │   │   ├── error-handling.interface.ts
+│   │   │   ├── core-error-bus.ts
+│   │   │   ├── core-exception-filter.ts
+│   │   │   ├── error-classifiers.ts
+│   │   │   ├── error-handlers.ts
+│   │   │   ├── error-notifiers.ts
+│   │   │   ├── error-recoveries.ts
+│   │   │   └── index.ts
+│   │   ├── monitoring/            # 性能监控
+│   │   │   ├── performance-monitor.interface.ts
+│   │   │   ├── core-performance-monitor.ts
+│   │   │   ├── performance-monitor.decorator.ts
+│   │   │   └── index.ts
+│   │   ├── testing/               # 测试支持
+│   │   │   ├── testing.interface.ts
+│   │   │   ├── core-testing-module.ts
+│   │   │   ├── core-test-base.ts
+│   │   │   ├── core-test-utils.ts
+│   │   │   ├── core-test-assertion.ts
+│   │   │   ├── core-test-data-factory.ts
+│   │   │   └── index.ts
+│   │   └── index.ts
+│   ├── infrastructure/            # 基础设施层
+│   │   ├── database/              # 数据库
+│   │   │   ├── mongodb/           # MongoDB
+│   │   │   │   ├── mongodb.interface.ts
+│   │   │   │   ├── mongodb-adapter.ts
+│   │   │   │   ├── mongodb-module.ts
+│   │   │   │   ├── mongodb.types.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── adapters/          # 其他数据库适配器
+│   │   │   └── index.ts
+│   │   ├── messaging/             # 消息系统
+│   │   │   ├── queues/            # 消息队列
+│   │   │   │   ├── message-queue.interface.ts
+│   │   │   │   ├── bull-message-queue.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── publishers/        # 发布器
+│   │   │   │   ├── publisher.interface.ts
+│   │   │   │   ├── core-command-publisher.ts
+│   │   │   │   ├── core-event-publisher.ts
+│   │   │   │   └── index.ts
+│   │   │   └── index.ts
+│   │   ├── storage/               # 存储
+│   │   │   ├── cache/             # 缓存
+│   │   │   │   ├── services/      # 缓存服务
+│   │   │   │   └── strategies/    # 缓存策略
+│   │   │   ├── event-store/       # 事件存储
+│   │   │   │   ├── event-store.interface.ts
+│   │   │   │   ├── core-event-store.ts
+│   │   │   │   └── index.ts
+│   │   │   └── index.ts
+│   │   ├── web/                   # Web 相关
+│   │   │   ├── fastify/           # Fastify
+│   │   │   │   ├── fastify.interface.ts
+│   │   │   │   ├── fastify-adapter.ts
+│   │   │   │   ├── fastify-module.ts
+│   │   │   │   ├── fastify-plugin.ts
+│   │   │   │   ├── fastify-middleware.ts
+│   │   │   │   └── index.ts
+│   │   │   ├── middleware/        # 中间件
+│   │   │   └── index.ts
+│   │   └── index.ts
+│   ├── application/               # 应用层
+│   │   ├── services/              # 应用服务
+│   │   ├── handlers/              # 处理器
+│   │   ├── explorers/             # 模块探索器
+│   │   │   ├── core-explorer.service.ts
+│   │   │   ├── auto-registration.service.ts
+│   │   │   ├── di-integration.service.ts
+│   │   │   ├── module-scanner.service.ts
+│   │   │   └── index.ts
+│   │   └── index.ts
+│   ├── domain/                    # 领域层
+│   │   ├── multi-tenant/          # 多租户
+│   │   │   ├── context/           # 租户上下文
+│   │   │   ├── isolation/         # 隔离策略
+│   │   │   └── strategies/        # 隔离策略实现
+│   │   ├── security/              # 安全
+│   │   │   ├── permissions/       # 权限管理
+│   │   │   └── validation/        # 安全验证
+│   │   ├── validation/            # 验证
+│   │   └── index.ts
+│   ├── shared/                    # 共享层
+│   │   ├── utils/                 # 工具函数
+│   │   │   ├── common/            # 通用工具
+│   │   │   ├── constants/         # 常量定义
+│   │   │   └── types/             # 类型定义
+│   │   ├── constants/             # 常量
+│   │   ├── types/                 # 类型定义
+│   │   ├── decorators/            # 通用装饰器
+│   │   ├── interceptors/          # 拦截器
+│   │   ├── configuration/         # 配置
+│   │   ├── adapters/              # 适配器
+│   │   ├── repositories/          # 仓储
+│   │   └── index.ts
 │   └── index.ts                   # 导出文件
 ├── tests/                         # 测试
 │   ├── unit/                      # 单元测试
@@ -4554,6 +4502,94 @@ packages/core/
 ├── tsconfig.json
 └── README.md
 ```
+
+### 目录结构说明
+
+#### 核心架构层 (`core/`)
+
+- **cqrs/**: CQRS 核心实现，包括命令、查询、事件和 Saga
+  - **commands/**: 命令定义和处理器
+  - **queries/**: 查询定义和处理器
+  - **events/**: 事件定义和处理器
+  - **sagas/**: Saga 模式实现，用于分布式事务
+- **entities/**: 基础实体和值对象
+- **decorators/**: CQRS 装饰器，用于标记命令、查询、事件处理器
+- **interfaces/**: 核心接口定义
+- **context/**: 异步上下文管理，提供请求级别的上下文传递
+- **error/**: 错误处理机制，包括错误分类、处理和恢复
+- **monitoring/**: 性能监控和指标收集
+- **testing/**: 测试支持工具和模拟对象
+
+#### 基础设施层 (`infrastructure/`)
+
+- **database/**: 数据库相关基础设施
+  - **mongodb/**: MongoDB 集成，包括适配器、模块和类型定义
+  - **adapters/**: 其他数据库适配器
+- **messaging/**: 消息系统基础设施
+  - **queues/**: 消息队列实现，基于 Bull
+  - **publishers/**: 命令和事件发布器
+- **storage/**: 存储基础设施
+  - **cache/**: 缓存层，支持多种缓存策略
+  - **event-store/**: 事件存储实现，支持事件溯源
+- **web/**: Web 相关基础设施
+  - **fastify/**: Fastify 集成，包括适配器、模块、插件和中间件
+  - **middleware/**: 通用中间件
+
+#### 应用层 (`application/`)
+
+- **services/**: 应用服务
+- **handlers/**: 处理器
+- **explorers/**: 模块探索器，自动发现和注册模块
+
+#### 领域层 (`domain/`)
+
+- **multi-tenant/**: 多租户支持
+- **security/**: 安全层，包括权限和验证
+- **validation/**: 验证层
+
+#### 共享层 (`shared/`)
+
+- **utils/**: 工具函数，包括常量、类型和通用工具
+- **constants/**: 常量定义
+- **types/**: 类型定义
+- **decorators/**: 通用装饰器
+- **interceptors/**: 通用拦截器
+- **configuration/**: 配置管理
+- **adapters/**: 适配器
+- **repositories/**: 仓储
+
+### 目录结构变更说明
+
+#### 主要变更
+
+1. **分层架构重构**: 按照 Clean Architecture 和 DDD 原则重新组织目录结构
+2. **核心层集中**: 将核心架构组件集中在 `core/` 目录下，包括 CQRS、实体、装饰器等
+3. **基础设施分离**: 将基础设施相关组件分离到 `infrastructure/` 目录下
+4. **应用层独立**: 创建独立的 `application/` 层，包含应用服务和处理器
+5. **领域层明确**: 将领域相关组件集中在 `domain/` 层
+6. **共享层统一**: 将通用组件集中在 `shared/` 层
+
+#### 新的分层结构
+
+- **core/**: 核心架构层，包含 CQRS、实体、装饰器、接口等核心组件
+- **infrastructure/**: 基础设施层，包含数据库、消息系统、存储、Web 等基础设施
+- **application/**: 应用层，包含应用服务、处理器、探索器等应用逻辑
+- **domain/**: 领域层，包含多租户、安全、验证等领域概念
+- **shared/**: 共享层，包含工具函数、常量、类型、装饰器等通用组件
+
+#### 删除的目录
+
+- 删除了混乱的 `architecture/` 目录，将其内容重新分配到各个分层中
+- 删除了重复的根目录下的各种功能目录
+- 删除了空的或冗余的目录结构
+
+#### 优势
+
+- **清晰的分层**: 每个层级职责明确，符合软件工程最佳实践
+- **易于维护**: 功能边界清晰，便于定位和修改
+- **可扩展性**: 新功能可以轻松添加到相应的层级
+- **团队协作**: 不同团队可以专注于不同的层级
+- **测试友好**: 每个层级可以独立进行测试
 
 ## 使用示例
 
