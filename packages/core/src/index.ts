@@ -20,6 +20,20 @@
 export * from './entities/base';
 export * from './entities/value-objects';
 
+// 事件系统（已实现）
+export * from './events/base';
+
+// CQRS 基础接口（已实现）
+export * from './commands/base';
+export * from './queries/base';
+export * from './architecture/interfaces';
+
+// 装饰器元数据系统（已实现）
+export * from './architecture/decorators';
+
+// 自动发现和注册系统（已实现）
+export * from './architecture/explorer';
+
 // TODO: 其他模块将在后续阶段实现
 // 架构基础层
 // export * from './architecture/interfaces';

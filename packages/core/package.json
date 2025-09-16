@@ -51,13 +51,15 @@
     "fastify": "^4.20.0",
     "mongodb": "^5.0.0",
     "mikro-orm": "^5.0.0",
-    "pg": "^8.10.0"
+    "pg": "^8.10.0",
+    "glob": "^10.3.0"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/node": "^20.11.0",
     "@types/uuid": "^9.0.0",
     "@types/pg": "^8.10.0",
+    "@types/glob": "^8.1.0",
     "@typescript-eslint/eslint-plugin": "^8.43.0",
     "@typescript-eslint/parser": "^8.43.0",
     "eslint": "^9.35.0",

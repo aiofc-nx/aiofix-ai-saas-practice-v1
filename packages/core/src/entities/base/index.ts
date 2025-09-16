@@ -7,3 +7,4 @@
 
 export * from './audit-info';
 export * from './base-entity';
+export * from './base-aggregate-root';
