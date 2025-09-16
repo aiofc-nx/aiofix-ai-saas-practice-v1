@@ -222,11 +222,13 @@ export function PerformanceMonitor(
       };
 
       // 设置元数据
-      SetMetadata(PERFORMANCE_MONITOR_METADATA_KEY, options)(
-        target,
-        propertyKey,
-        descriptor,
-      );
+      if (propertyKey) {
+        SetMetadata(PERFORMANCE_MONITOR_METADATA_KEY, options)(
+          target,
+          propertyKey,
+          descriptor,
+        );
+      }
     } else {
       // 类装饰器
       SetMetadata(PERFORMANCE_MONITOR_METADATA_KEY, options)(target);

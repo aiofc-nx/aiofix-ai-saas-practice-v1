@@ -69,7 +69,7 @@
  *
  * @since 1.0.0
  */
-import { EntityId } from '../../entities/value-objects/entity-id';
+import { EntityId } from '../../../entities/value-objects/entity-id';
 
 /**
  * 排序方向枚举

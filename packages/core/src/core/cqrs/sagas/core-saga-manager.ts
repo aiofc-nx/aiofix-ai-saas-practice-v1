@@ -53,13 +53,13 @@
  *
  * @since 1.0.0
  */
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { Observable, of, throwError } from 'rxjs';
-import { map, catchError, switchMap, tap } from 'rxjs/operators';
+import { map, catchError, tap } from 'rxjs/operators';
 import type { ILoggerService } from '@aiofix/logging';
 import { LogContext } from '@aiofix/logging';
 import { v4 as uuidv4 } from 'uuid';
-import type { IAsyncContext } from '../context/async-context.interface';
+import type { IAsyncContext } from '../../context/async-context.interface';
 import {
   ISaga,
   ISagaManager,
@@ -86,7 +86,16 @@ export class CoreSagaManager implements ISagaManager {
     timeoutSagas: 0,
     averageExecutionTime: 0,
     byType: {},
-    byStatus: {} as Record<SagaStatus, number>,
+    byStatus: {
+      [SagaStatus.NOT_STARTED]: 0,
+      [SagaStatus.RUNNING]: 0,
+      [SagaStatus.COMPLETED]: 0,
+      [SagaStatus.FAILED]: 0,
+      [SagaStatus.CANCELLED]: 0,
+      [SagaStatus.COMPENSATING]: 0,
+      [SagaStatus.COMPENSATED]: 0,
+      [SagaStatus.TIMEOUT]: 0,
+    },
     byTenant: {},
     byTime: {
       lastHour: 0,
@@ -101,12 +110,14 @@ export class CoreSagaManager implements ISagaManager {
   private _cleanupTimer?: ReturnType<typeof globalThis.setInterval>;
   private _monitoringTimer?: ReturnType<typeof globalThis.setInterval>;
 
-  constructor(private readonly logger: ILoggerService) {}
+  constructor(
+    @Inject('ILoggerService') private readonly logger: ILoggerService,
+  ) {}
 
   /**
    * 启动 Saga
    */
-  public startSaga<T extends ISaga>(
+  public startSaga(
     sagaType: string,
     data: Record<string, unknown>,
     context?: IAsyncContext,

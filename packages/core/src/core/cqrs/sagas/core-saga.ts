@@ -92,6 +92,7 @@ import {
 export abstract class CoreSaga implements ISaga {
   protected readonly steps: ISagaStep[] = [];
   protected configuration: ISagaConfiguration;
+  protected status: SagaStatus = SagaStatus.NOT_STARTED;
 
   constructor(
     public readonly sagaType: string,
@@ -344,6 +345,81 @@ export abstract class CoreSaga implements ISaga {
   }
 
   /**
+   * 获取 Saga 状态
+   */
+  public getStatus(): SagaStatus {
+    return this.status || SagaStatus.NOT_STARTED;
+  }
+
+  /**
+   * 更新 Saga 状态
+   */
+  public updateStatus(status: SagaStatus): void {
+    this.status = status;
+    this.logger?.debug(
+      `Saga status updated: ${this.sagaType}`,
+      LogContext.SYSTEM,
+      { status },
+    );
+  }
+
+  /**
+   * 更新 Saga 配置
+   */
+  public updateConfiguration(config: Partial<ISagaConfiguration>): void {
+    this.configure(config);
+  }
+
+  /**
+   * 执行单个步骤（公共方法）
+   */
+  public async executeStepById(
+    stepId: string,
+    context: ISagaExecutionContext,
+  ): Promise<{ success: boolean; data?: unknown; error?: string }> {
+    const step = this.getStep(stepId);
+    if (!step) {
+      return {
+        success: false,
+        error: `Step ${stepId} not found`,
+      };
+    }
+
+    try {
+      const result = await this.executeStep(step, context).toPromise();
+      return { success: true, data: result };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  /**
+   * 补偿单个步骤（公共方法）
+   */
+  public async compensateStepById(
+    stepId: string,
+    context: ISagaExecutionContext,
+  ): Promise<{ success: boolean; data?: unknown; error?: string }> {
+    const step = this.getStep(stepId);
+    if (!step) {
+      return {
+        success: false,
+        error: `Step ${stepId} not found`,
+      };
+    }
+
+    try {
+      const result = await this.executeCompensationStep(
+        step,
+        context,
+      ).toPromise();
+      return { success: true, data: result };
+    } catch (error) {
+      return { success: false, error: (error as Error).message };
+    }
+  }
+
+  /**
    * 更新步骤
    */
   public updateStep(stepId: string, updates: Partial<ISagaStep>): boolean {
@@ -402,10 +478,14 @@ export abstract class CoreSaga implements ISaga {
 
     return this.executeStepAtIndex(context, 0).pipe(
       map((updatedContext) => {
-        if (updatedContext.status === SagaStatus.RUNNING) {
+        // 只有在所有步骤都完成且状态仍然是 RUNNING 时才设置为 COMPLETED
+        if (
+          updatedContext.status === SagaStatus.RUNNING &&
+          updatedContext.currentStepIndex >= updatedContext.steps.length
+        ) {
           updatedContext.status = SagaStatus.COMPLETED;
+          updatedContext.endTime = new Date();
         }
-        updatedContext.endTime = new Date();
         return updatedContext;
       }),
     );

@@ -75,7 +75,7 @@ export class CoreFastifyMiddleware implements IFastifyMiddleware {
   private _isRegistered = false;
   private _registerTime?: Date;
   private _unregisterTime?: Date;
-  private _fastifyInstance?: FastifyInstance;
+  // private _fastifyInstance?: FastifyInstance;
   private _requestCount = 0;
   private _errorCount = 0;
   private _successCount = 0;
@@ -127,7 +127,7 @@ export class CoreFastifyMiddleware implements IFastifyMiddleware {
 
       this._isRegistered = true;
       this._registerTime = new Date();
-      this._fastifyInstance = fastify;
+      // this._fastifyInstance = fastify;
 
       this.logger?.info(
         `Middleware registered: ${this.name}`,

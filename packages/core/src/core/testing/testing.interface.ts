@@ -34,7 +34,7 @@
  * @since 1.0.0
  */
 
-import { ModuleMetadata, Type } from '@nestjs/common';
+import { Type } from '@nestjs/common';
 import type { IAsyncContext } from '../context/async-context.interface';
 
 /**

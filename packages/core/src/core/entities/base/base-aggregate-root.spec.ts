@@ -5,7 +5,7 @@
  * @since 1.0.0
  */
 import { BaseAggregateRoot } from './base-aggregate-root';
-import { BaseDomainEvent } from '../../events/base/base-domain-event';
+import { BaseDomainEvent } from '../../cqrs/events/base/base-domain-event';
 import { EntityId } from '../value-objects/entity-id';
 import { IPartialAuditInfo } from './audit-info';
 
@@ -422,10 +422,12 @@ describe('BaseAggregateRoot', () => {
       );
 
       expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (aggregate as any).addDomainEvent(null);
       }).toThrow('Domain event cannot be null or undefined');
 
       expect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (aggregate as any).addDomainEvent(undefined);
       }).toThrow('Domain event cannot be null or undefined');
     });

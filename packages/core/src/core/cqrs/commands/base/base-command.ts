@@ -62,7 +62,7 @@
  *
  * @since 1.0.0
  */
-import { EntityId } from '../../entities/value-objects/entity-id';
+import { EntityId } from '../../../entities/value-objects/entity-id';
 
 export abstract class BaseCommand {
   private readonly _commandId: EntityId;

@@ -35,7 +35,7 @@
  */
 
 import { Observable } from 'rxjs';
-import type { IAsyncContext } from '../context/async-context.interface';
+import type { IAsyncContext } from '../../../core/context/async-context.interface';
 
 /**
  * 消息优先级枚举

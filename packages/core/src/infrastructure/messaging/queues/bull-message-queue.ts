@@ -66,7 +66,7 @@ import { Observable, of, throwError } from 'rxjs';
 import type { ILoggerService } from '@aiofix/logging';
 import { LogContext } from '@aiofix/logging';
 import { v4 as uuidv4 } from 'uuid';
-import type { IAsyncContext } from '../context/async-context.interface';
+import type { IAsyncContext } from '../../../core/context/async-context.interface';
 import {
   IMessageQueue,
   IMessage,

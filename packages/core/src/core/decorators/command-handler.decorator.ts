@@ -49,8 +49,8 @@
  * @since 1.0.0
  */
 import 'reflect-metadata';
-import { BaseCommand } from '../../commands/base/base-command';
-import { ICommandHandler } from '../../commands/base/command-handler.interface';
+import { BaseCommand } from '../cqrs/commands/base/base-command';
+import { ICommandHandler } from '../cqrs/commands/base/command-handler.interface';
 import {
   setCommandHandlerMetadata,
   getCommandHandlerMetadata as getMetadata,

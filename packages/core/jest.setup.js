@@ -15,14 +15,15 @@ jest.setTimeout(10000);
 
 // 注意：我们不在这里模拟 UUID，让测试使用真实的 uuid 库
 
-// 模拟 Reflect.metadata
-global.Reflect = {
-  ...global.Reflect,
-  metadata: jest.fn(() => (target, propertyKey, descriptor) => descriptor),
-  getMetadata: jest.fn(() => undefined),
-  defineMetadata: jest.fn(),
-  hasMetadata: jest.fn(() => false),
-};
+// 确保 Reflect 对象正确设置
+if (!global.Reflect) {
+  global.Reflect = {};
+}
+
+// 添加必要的 Reflect 方法
+if (!global.Reflect.getOwnMetadataKeys) {
+  global.Reflect.getOwnMetadataKeys = jest.fn(() => []);
+}
 
 // 测试工具函数
 global.createMockEntity = (overrides = {}) => ({

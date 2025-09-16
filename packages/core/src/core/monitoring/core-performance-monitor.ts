@@ -62,7 +62,7 @@
  */
 import { Injectable } from '@nestjs/common';
 import { Observable, of, throwError } from 'rxjs';
-import { map, catchError, tap } from 'rxjs/operators';
+// import { map, catchError, tap } from 'rxjs/operators';
 import type { ILoggerService } from '@aiofix/logging';
 import { LogContext } from '@aiofix/logging';
 import { v4 as uuidv4 } from 'uuid';
@@ -73,7 +73,7 @@ import {
   IPerformanceAggregation,
   IPerformanceReport,
   IPerformanceAlert,
-  IPerformanceMonitorConfiguration,
+  type IPerformanceMonitorConfiguration,
   IPerformanceMonitorStatistics,
   PerformanceMetricType,
   PerformanceAggregationType,
@@ -136,7 +136,7 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
    */
   public recordMetric(
     metric: IPerformanceMetric,
-    context?: IAsyncContext,
+    _context?: IAsyncContext,
   ): Observable<boolean> {
     if (!this._isStarted) {
       return throwError(() => new Error('Performance monitor is not started'));
@@ -205,7 +205,7 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
    */
   public recordMetrics(
     metrics: IPerformanceMetric[],
-    context?: IAsyncContext,
+    _context?: IAsyncContext,
   ): Observable<boolean> {
     if (!this._isStarted) {
       return throwError(() => new Error('Performance monitor is not started'));
@@ -261,7 +261,7 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
   public getMetrics(
     name: string,
     timeRange: { start: Date; end: Date },
-    context?: IAsyncContext,
+    _context?: IAsyncContext,
   ): Observable<IPerformanceMetric[]> {
     if (!this._isStarted) {
       return throwError(() => new Error('Performance monitor is not started'));
@@ -317,7 +317,7 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
     name: string,
     aggregationType: PerformanceAggregationType,
     timeRange: { start: Date; end: Date },
-    context?: IAsyncContext,
+    _context?: IAsyncContext,
   ): Observable<IPerformanceAggregation | null> {
     if (!this._isStarted) {
       return throwError(() => new Error('Performance monitor is not started'));
@@ -387,7 +387,7 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
    */
   public getPerformanceReport(
     reportId: string,
-    context?: IAsyncContext,
+    _context?: IAsyncContext,
   ): Observable<IPerformanceReport | null> {
     if (!this._isStarted) {
       return throwError(() => new Error('Performance monitor is not started'));
@@ -447,7 +447,7 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
       };
 
       // 收集所有指标
-      for (const [metricName, metricList] of this.metrics.entries()) {
+      for (const [, metricList] of this.metrics.entries()) {
         const filteredMetrics = metricList.filter(
           (metric) =>
             metric.timestamp >= timeRange.start &&
@@ -458,16 +458,18 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
 
       // 生成聚合数据
       for (const metricName of this.metrics.keys()) {
-        const aggregation = await this.getMetricAggregation(
+        const aggregation = this.getMetricAggregation(
           metricName,
           PerformanceAggregationType.AVERAGE,
           timeRange,
           context,
-        ).toPromise();
+        );
 
-        if (aggregation) {
-          report.data.aggregations.push(aggregation);
-        }
+        aggregation.subscribe((agg) => {
+          if (agg) {
+            report.data.aggregations.push(agg);
+          }
+        });
       }
 
       // 生成摘要
@@ -511,7 +513,7 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
   public getAlerts(
     level?: PerformanceAlertLevel,
     status?: string,
-    context?: IAsyncContext,
+    _context?: IAsyncContext,
   ): Observable<IPerformanceAlert[]> {
     if (!this._isStarted) {
       return throwError(() => new Error('Performance monitor is not started'));
@@ -571,7 +573,7 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
    */
   public createAlert(
     alert: Omit<IPerformanceAlert, 'id' | 'timestamp'>,
-    context?: IAsyncContext,
+    _context?: IAsyncContext,
   ): Observable<IPerformanceAlert> {
     if (!this._isStarted) {
       return throwError(() => new Error('Performance monitor is not started'));
@@ -639,7 +641,7 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
    */
   public resolveAlert(
     alertId: string,
-    context?: IAsyncContext,
+    _context?: IAsyncContext,
   ): Observable<boolean> {
     if (!this._isStarted) {
       return throwError(() => new Error('Performance monitor is not started'));
@@ -688,7 +690,7 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
   public suppressAlert(
     alertId: string,
     duration: number,
-    context?: IAsyncContext,
+    _context?: IAsyncContext,
   ): Observable<boolean> {
     if (!this._isStarted) {
       return throwError(() => new Error('Performance monitor is not started'));
@@ -736,7 +738,7 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
    * 获取性能监控统计信息
    */
   public getStatistics(
-    context?: IAsyncContext,
+    _context?: IAsyncContext,
   ): Observable<IPerformanceMonitorStatistics> {
     if (!this._isStarted) {
       return throwError(() => new Error('Performance monitor is not started'));
@@ -751,7 +753,7 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
    */
   public cleanupExpiredData(
     retentionDays: number,
-    context?: IAsyncContext,
+    _context?: IAsyncContext,
   ): Observable<number> {
     if (!this._isStarted) {
       return throwError(() => new Error('Performance monitor is not started'));
@@ -819,7 +821,7 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
   /**
    * 健康检查
    */
-  public healthCheck(context?: IAsyncContext): Observable<boolean> {
+  public healthCheck(_context?: IAsyncContext): Observable<boolean> {
     return of(this._isStarted);
   }
 
@@ -1015,13 +1017,14 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
       case PerformanceAggregationType.COUNT:
         value = values.length;
         break;
-      case PerformanceAggregationType.MEDIAN:
+      case PerformanceAggregationType.MEDIAN: {
         const sorted = [...values].sort((a, b) => a - b);
         value =
           sorted.length % 2 === 0
             ? (sorted[sorted.length / 2 - 1] + sorted[sorted.length / 2]) / 2
             : sorted[Math.floor(sorted.length / 2)];
         break;
+      }
       default:
         value = values.reduce((sum, val) => sum + val, 0) / values.length;
     }
@@ -1063,11 +1066,11 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
 
     // 计算统计信息
     for (const [type, values] of Object.entries(byType)) {
-      summary.metricTypes[type] = values.length;
-      summary.averageValues[type] =
+      (summary.metricTypes as Record<string, number>)[type] = values.length;
+      (summary.averageValues as Record<string, number>)[type] =
         values.reduce((sum, val) => sum + val, 0) / values.length;
-      summary.minValues[type] = Math.min(...values);
-      summary.maxValues[type] = Math.max(...values);
+      (summary.minValues as Record<string, number>)[type] = Math.min(...values);
+      (summary.maxValues as Record<string, number>)[type] = Math.max(...values);
     }
 
     return summary;

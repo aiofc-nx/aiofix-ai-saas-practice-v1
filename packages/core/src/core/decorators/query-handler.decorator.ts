@@ -54,9 +54,9 @@
  * @since 1.0.0
  */
 import 'reflect-metadata';
-import { BaseQuery } from '../../queries/base/base-query';
-import { IQueryHandler } from '../../queries/base/query-handler.interface';
-import { IQueryResult } from '../../queries/base/base-query';
+import { BaseQuery } from '../cqrs/queries/base/base-query';
+import { IQueryHandler } from '../cqrs/queries/base/query-handler.interface';
+import { IQueryResult } from '../cqrs/queries/base/base-query';
 import {
   setQueryHandlerMetadata,
   getQueryHandlerMetadata as getMetadata,

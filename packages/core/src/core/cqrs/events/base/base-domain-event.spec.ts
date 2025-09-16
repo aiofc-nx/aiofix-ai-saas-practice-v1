@@ -5,7 +5,7 @@
  * @since 1.0.0
  */
 import { BaseDomainEvent } from './base-domain-event';
-import { EntityId } from '../../entities/value-objects/entity-id';
+import { EntityId } from '../../../entities/value-objects/entity-id';
 
 // 测试用的具体事件类
 class TestDomainEvent extends BaseDomainEvent {

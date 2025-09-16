@@ -62,7 +62,7 @@ import {
   ITestDataFactory,
   ITestAssertion,
   ITestMock,
-  ITestConfiguration,
+  type ITestConfiguration,
   TestEnvironmentType,
 } from './testing.interface';
 import { CoreTestingModule } from './core-testing-module';
@@ -74,7 +74,7 @@ import { CoreTestAssertion } from './core-test-assertion';
  */
 @Injectable()
 export abstract class CoreTestBase implements ITestBase {
-  public testModule: ITestModule;
+  public testModule!: ITestModule;
   public dataFactory: ITestDataFactory;
   public assertion: ITestAssertion;
   public context?: IAsyncContext;
@@ -127,7 +127,7 @@ export abstract class CoreTestBase implements ITestBase {
       await this.testModule.initialize();
 
       // 初始化测试数据工厂
-      await this.dataFactory.initialize();
+      // await this.dataFactory.initialize();
 
       // 创建测试上下文
       this.context = this.createTestContext();
@@ -296,7 +296,7 @@ export abstract class CoreTestBase implements ITestBase {
       setUserAgent: () => {},
       getIpAddress: () => '127.0.0.1',
       setIpAddress: () => {},
-      getSource: () => 'test',
+      getSource: () => 'SYSTEM' as const,
       setSource: () => {},
       getLocale: () => 'zh-CN',
       setLocale: () => {},
@@ -306,14 +306,35 @@ export abstract class CoreTestBase implements ITestBase {
       isOrganizationLevel: () => false,
       isDepartmentLevel: () => false,
       isUserLevel: () => true,
-      getContextLevel: () => 'user',
+      getContextLevel: () => 'USER' as const,
       getCustomData: () => ({}),
       setCustomData: () => {},
       getAllCustomData: () => ({}),
-      clearCustomData: () => {},
-      hasCustomData: () => false,
-      getCustomDataKeys: () => [],
-      mergeCustomData: () => {},
+      // clearCustomData: () => {},
+      // hasCustomData: () => false,
+      // getCustomDataKeys: () => [],
+      // mergeCustomData: () => {},
+      getData: () => ({}),
+      setData: () => {},
+      getValue: () => undefined,
+      setValue: () => {},
+      hasValue: () => false,
+      removeValue: () => {},
+      // clearData: () => {},
+      // getDataKeys: () => [],
+      // getDataSize: () => 0,
+      // isEmpty: () => true,
+      clear: () => {},
+      merge: () => {},
+      isValid: () => true,
+      getId: () => 'test-context-id',
+      // getVersion: () => 1,
+      getCreatedAt: () => new Date(),
+      // getUpdatedAt: () => new Date(),
+      getExpiresAt: () => undefined,
+      isExpired: () => false,
+      setExpiresAt: () => {},
+      removeCustomData: () => {},
       clone: () => this.createTestContext(),
       toJSON: () => ({}),
       toString: () => 'TestContext',

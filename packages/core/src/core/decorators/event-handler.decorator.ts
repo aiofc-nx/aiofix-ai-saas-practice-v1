@@ -48,8 +48,8 @@
  * @since 1.0.0
  */
 import 'reflect-metadata';
-import { BaseDomainEvent } from '../../events/base/base-domain-event';
-import { IEventHandler } from '../../events/base/event-handler.interface';
+import { BaseDomainEvent } from '../cqrs/events/base/base-domain-event';
+import { IEventHandler } from '../cqrs/events/base/event-handler.interface';
 import {
   setEventHandlerMetadata,
   getEventHandlerMetadata as getMetadata,

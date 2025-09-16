@@ -403,7 +403,7 @@ export class CoreTestDataFactory implements ITestDataFactory {
 
       this.logger?.debug(`Test data generated: ${name}`, LogContext.SYSTEM, {
         generatorName: name,
-        dataKeys: Object.keys(data),
+        dataKeys: Object.keys(data as Record<string, unknown>),
       });
 
       return data;

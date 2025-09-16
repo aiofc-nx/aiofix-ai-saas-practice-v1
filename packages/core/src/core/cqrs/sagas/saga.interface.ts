@@ -9,7 +9,7 @@
  */
 
 import { Observable } from 'rxjs';
-import type { IAsyncContext } from '../context/async-context.interface';
+import type { IAsyncContext } from '../../context/async-context.interface';
 
 /**
  * Saga 状态枚举

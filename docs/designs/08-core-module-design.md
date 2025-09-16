@@ -4379,7 +4379,12 @@ packages/core/
 │   │   │   ├── core-async-context.ts
 │   │   │   ├── core-async-context-manager.ts
 │   │   │   └── index.ts
-│   │   ├── error/                 # 错误处理
+│   │   ├── errors/                 # 错误类型定义
+│   │   │   ├── error.types.ts      # 错误类型、枚举、常量
+│   │   │   ├── base-error.ts       # 基础错误类
+│   │   │   ├── business-errors.ts  # 业务错误类
+│   │   │   └── index.ts            # 导出文件
+│   │   ├── error-handling/         # 错误处理机制
 │   │   │   ├── error-handling.interface.ts
 │   │   │   ├── core-error-bus.ts
 │   │   │   ├── core-exception-filter.ts
@@ -4516,7 +4521,8 @@ packages/core/
 - **decorators/**: CQRS 装饰器，用于标记命令、查询、事件处理器
 - **interfaces/**: 核心接口定义
 - **context/**: 异步上下文管理，提供请求级别的上下文传递
-- **error/**: 错误处理机制，包括错误分类、处理和恢复
+- **errors/**: 错误类型定义，包括基础错误类和业务错误类
+- **error-handling/**: 错误处理机制，包括错误分类、处理和恢复
 - **monitoring/**: 性能监控和指标收集
 - **testing/**: 测试支持工具和模拟对象
 

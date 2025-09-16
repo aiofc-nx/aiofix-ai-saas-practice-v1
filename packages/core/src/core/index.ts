@@ -7,7 +7,20 @@
 
 export * from './context';
 export * from './decorators';
-export * from './error';
+// 错误类型定义
+export * from './errors';
+
+// 错误处理机制（只导出不冲突的部分）
+export { ErrorType, CoreErrorBus, CoreExceptionFilter } from './error-handling';
+
+export type {
+  IErrorClassifier,
+  IErrorHandler,
+  IErrorNotifier,
+  IErrorRecovery,
+  IErrorBus,
+  IExceptionFilter,
+} from './error-handling';
 export * from './interfaces';
 export * from './monitoring';
 export * from './testing';

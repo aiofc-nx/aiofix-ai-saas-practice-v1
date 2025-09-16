@@ -57,13 +57,13 @@
  */
 import { Injectable } from '@nestjs/common';
 import { Observable, of, throwError } from 'rxjs';
-import { map, catchError, tap } from 'rxjs/operators';
+// import { map, catchError, tap } from 'rxjs/operators';
 import type { ILoggerService } from '@aiofix/logging';
 import { LogContext } from '@aiofix/logging';
 import { v4 as uuidv4 } from 'uuid';
-import type { EntityId } from '../../entities/value-objects/entity-id';
-import type { BaseDomainEvent } from '../../events/base/base-domain-event';
-import type { IAsyncContext } from '../context/async-context.interface';
+import type { EntityId } from '../../../core/entities/value-objects/entity-id';
+import type { BaseDomainEvent } from '../../../core/cqrs/events/base/base-domain-event';
+import type { IAsyncContext } from '../../../core/context/async-context.interface';
 import {
   IEventStore,
   IEventStoreOptions,
@@ -254,10 +254,10 @@ export class CoreEventStore implements IEventStore {
           aggregateId: aggregateIdStr,
           eventType: event.eventType,
           eventData: event.eventData,
-          eventMetadata: event.eventMetadata,
+          eventMetadata: event.eventData,
           version: newVersion,
           tenantId,
-          createdAt: event.occurredOn,
+          createdAt: event.occurredAt,
           deleted: false,
         };
 
@@ -408,7 +408,7 @@ export class CoreEventStore implements IEventStore {
           eventData: entry.eventData,
           eventMetadata: entry.eventMetadata,
           occurredOn: entry.createdAt,
-        } as BaseDomainEvent;
+        } as unknown as BaseDomainEvent;
       });
 
       const currentVersion = this.aggregateVersions.get(aggregateIdStr) || 0;
@@ -485,7 +485,7 @@ export class CoreEventStore implements IEventStore {
       let allEvents: IEventStoreEntry[] = [];
 
       // 收集所有事件
-      for (const [aggregateId, events] of this.events.entries()) {
+      for (const [, events] of this.events.entries()) {
         const filteredEvents = events.filter((event) => {
           if (event.deleted) return false;
           if (tenantId && event.tenantId !== tenantId) return false;
@@ -536,7 +536,7 @@ export class CoreEventStore implements IEventStore {
           eventData: entry.eventData,
           eventMetadata: entry.eventMetadata,
           occurredOn: entry.createdAt,
-        } as BaseDomainEvent;
+        } as unknown as BaseDomainEvent;
       });
 
       const result: IEventStreamResult = {
@@ -547,7 +547,8 @@ export class CoreEventStore implements IEventStore {
           ? allEvents.length > options.maxEvents
           : false,
         nextPage:
-          options.enablePagination && result.hasMore
+          options.enablePagination &&
+          (options.maxEvents ? allEvents.length > options.maxEvents : false)
             ? (options.page || 1) + 1
             : undefined,
         queryTime: Date.now() - startTime,
@@ -584,7 +585,7 @@ export class CoreEventStore implements IEventStore {
    */
   public getEvent(
     eventId: string,
-    context?: IAsyncContext,
+    _context?: IAsyncContext,
   ): Observable<BaseDomainEvent | null> {
     if (!this._isStarted) {
       return throwError(() => new Error('Event store is not started'));
@@ -602,9 +603,9 @@ export class CoreEventStore implements IEventStore {
             eventId: { toString: () => event.eventId },
             eventType: event.eventType,
             eventData: event.eventData,
-            eventMetadata: event.eventMetadata,
+            eventMetadata: event.eventData,
             occurredOn: event.createdAt,
-          } as BaseDomainEvent;
+          } as unknown as BaseDomainEvent;
 
           return of(domainEvent);
         }
@@ -631,7 +632,7 @@ export class CoreEventStore implements IEventStore {
    */
   public getAggregateVersion(
     aggregateId: EntityId,
-    context?: IAsyncContext,
+    _context?: IAsyncContext,
   ): Observable<number> {
     if (!this._isStarted) {
       return throwError(() => new Error('Event store is not started'));
@@ -654,7 +655,7 @@ export class CoreEventStore implements IEventStore {
    */
   public existsAggregate(
     aggregateId: EntityId,
-    context?: IAsyncContext,
+    _context?: IAsyncContext,
   ): Observable<boolean> {
     if (!this._isStarted) {
       return throwError(() => new Error('Event store is not started'));
@@ -957,7 +958,7 @@ export class CoreEventStore implements IEventStore {
    * 获取统计信息
    */
   public getStatistics(
-    context?: IAsyncContext,
+    _context?: IAsyncContext,
   ): Observable<IEventStoreStatistics> {
     if (!this._isStarted) {
       return throwError(() => new Error('Event store is not started'));
@@ -972,7 +973,7 @@ export class CoreEventStore implements IEventStore {
    */
   public cleanupExpiredData(
     retentionDays: number,
-    context?: IAsyncContext,
+    _context?: IAsyncContext,
   ): Observable<number> {
     if (!this._isStarted) {
       return throwError(() => new Error('Event store is not started'));
@@ -1028,7 +1029,7 @@ export class CoreEventStore implements IEventStore {
   public backupData(
     backupPath: string,
     options: Record<string, unknown> = {},
-    context?: IAsyncContext,
+    _context?: IAsyncContext,
   ): Observable<boolean> {
     if (!this._isStarted) {
       return throwError(() => new Error('Event store is not started'));
@@ -1071,7 +1072,7 @@ export class CoreEventStore implements IEventStore {
   public restoreData(
     backupPath: string,
     options: Record<string, unknown> = {},
-    context?: IAsyncContext,
+    _context?: IAsyncContext,
   ): Observable<boolean> {
     if (!this._isStarted) {
       return throwError(() => new Error('Event store is not started'));
@@ -1111,7 +1112,7 @@ export class CoreEventStore implements IEventStore {
   /**
    * 健康检查
    */
-  public healthCheck(context?: IAsyncContext): Observable<boolean> {
+  public healthCheck(_context?: IAsyncContext): Observable<boolean> {
     return of(this._isStarted);
   }
 

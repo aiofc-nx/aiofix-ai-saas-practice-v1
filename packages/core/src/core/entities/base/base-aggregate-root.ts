@@ -89,7 +89,7 @@
  * @since 1.0.0
  */
 import { BaseEntity } from './base-entity';
-import { BaseDomainEvent } from '../../events/base/base-domain-event';
+import { BaseDomainEvent } from '../../cqrs/events/base/base-domain-event';
 import { EntityId } from '../value-objects/entity-id';
 import { IPartialAuditInfo } from './audit-info';
 

@@ -36,7 +36,7 @@
 
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { ModuleMetadata } from '@nestjs/common';
-import type { IAsyncContext } from '../context/async-context.interface';
+import type { IAsyncContext } from '../../../core/context/async-context.interface';
 
 /**
  * Fastify插件配置接口
