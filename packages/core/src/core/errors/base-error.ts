@@ -70,12 +70,13 @@ export abstract class BaseError extends Error {
   private readonly _info: IErrorInfo;
   private readonly _timestamp: Date;
   private readonly _id: string;
+  private _cause?: Error | BaseError;
 
   constructor(
     message: string,
     code: string = CommonErrorCodes.UNK_UNKNOWN_ERROR,
     category: ErrorCategory = ErrorCategory.UNKNOWN,
-    severity: ErrorSeverity = ErrorSeverity.INFO,
+    severity: ErrorSeverity = ErrorSeverity.MEDIUM,
     metadata: Partial<IErrorMetadata> = {},
     context: Partial<IErrorContext> = {},
     info: Partial<IErrorInfo> = {},
@@ -168,41 +169,6 @@ export abstract class BaseError extends Error {
   }
 
   /**
-   * 检查错误是否可恢复
-   */
-  public get isRecoverable(): boolean {
-    return this._metadata.recoverable;
-  }
-
-  /**
-   * 检查错误是否可重试
-   */
-  public get isRetryable(): boolean {
-    return this._metadata.retryable;
-  }
-
-  /**
-   * 检查错误是否应该记录
-   */
-  public get isLoggable(): boolean {
-    return this._metadata.loggable;
-  }
-
-  /**
-   * 检查错误是否应该告警
-   */
-  public get isAlertable(): boolean {
-    return this._metadata.alertable;
-  }
-
-  /**
-   * 检查错误是否应该监控
-   */
-  public get isMonitorable(): boolean {
-    return this._metadata.monitorable;
-  }
-
-  /**
    * 获取错误重试延迟
    */
   public get retryDelay(): number | undefined {
@@ -261,8 +227,8 @@ export abstract class BaseError extends Error {
   /**
    * 获取错误原因
    */
-  public override get cause(): string | undefined {
-    return this._info.cause;
+  public override get cause(): Error | BaseError | undefined {
+    return this._cause;
   }
 
   /**
@@ -335,6 +301,7 @@ export abstract class BaseError extends Error {
       info: this._info,
       timestamp: this._timestamp.toISOString(),
       stack: this.stack,
+      cause: this._cause,
     };
   }
 
@@ -358,6 +325,7 @@ export abstract class BaseError extends Error {
     timestamp: string;
     recoverable: boolean;
     retryable: boolean;
+    tags: string[];
   } {
     return {
       id: this._id,
@@ -369,7 +337,146 @@ export abstract class BaseError extends Error {
       timestamp: this._timestamp.toISOString(),
       recoverable: this._metadata.recoverable,
       retryable: this._metadata.retryable,
+      tags: this._metadata.tags || [],
     };
+  }
+
+  /**
+   * 获取错误消息
+   */
+  public getMessage(): string {
+    return this.message;
+  }
+
+  /**
+   * 获取错误代码
+   */
+  public getCode(): string {
+    return this._code;
+  }
+
+  /**
+   * 获取错误类别
+   */
+  public getCategory(): ErrorCategory {
+    return this._category;
+  }
+
+  /**
+   * 获取错误严重性
+   */
+  public getSeverity(): ErrorSeverity {
+    return this._severity;
+  }
+
+  /**
+   * 获取错误元数据
+   */
+  public getMetadata(): IErrorMetadata {
+    return { ...this._metadata };
+  }
+
+  /**
+   * 获取错误上下文
+   */
+  public getContext(): IErrorContext {
+    return { ...this._context };
+  }
+
+  /**
+   * 设置错误原因
+   */
+  public setCause(cause: Error | BaseError): void {
+    this._cause = cause;
+  }
+
+  /**
+   * 获取错误原因
+   */
+  public getCause(): Error | BaseError | undefined {
+    return this._cause;
+  }
+
+  /**
+   * 获取错误链
+   */
+  public getErrorChain(): Array<BaseError | Error> {
+    const chain: Array<BaseError | Error> = [this];
+    let current = this.getCause();
+
+    while (current) {
+      chain.push(current);
+      if (current instanceof BaseError) {
+        current = current.getCause();
+      } else {
+        break;
+      }
+    }
+
+    return chain;
+  }
+
+  /**
+   * 检查错误是否可恢复
+   */
+  public isRecoverable(): boolean {
+    return this._metadata.recoverable;
+  }
+
+  /**
+   * 检查错误是否可重试
+   */
+  public isRetryable(): boolean {
+    return this._metadata.retryable;
+  }
+
+  /**
+   * 检查错误是否应该记录
+   */
+  public isLoggable(): boolean {
+    return this._metadata.loggable;
+  }
+
+  /**
+   * 检查错误是否应该告警
+   */
+  public isAlertable(): boolean {
+    return this._metadata.alertable;
+  }
+
+  /**
+   * 检查错误是否应该监控
+   */
+  public isMonitorable(): boolean {
+    return this._metadata.monitorable;
+  }
+
+  /**
+   * 检查错误是否有指定标签
+   */
+  public hasTag(tag: string): boolean {
+    return this._metadata.tags?.includes(tag) || false;
+  }
+
+  /**
+   * 获取所有错误标签
+   */
+  public getTags(): string[] {
+    return this._metadata.tags || [];
+  }
+
+  /**
+   * 比较错误类型
+   */
+  public isSameType(other: BaseError): boolean {
+    return this.constructor.name === other.constructor.name;
+  }
+
+  /**
+   * 比较错误严重性
+   */
+  public isSameSeverity(other: BaseError): boolean {
+    return this._severity === other._severity;
   }
 
   /**
@@ -475,7 +582,7 @@ export abstract class BaseError extends Error {
 export abstract class BusinessError extends BaseError {
   constructor(
     message: string,
-    code: string = CommonErrorCodes.BIZ_OPERATION_NOT_ALLOWED,
+    code: string = CommonErrorCodes.BIZ_ENTITY_NOT_FOUND,
     severity: ErrorSeverity = ErrorSeverity.MEDIUM,
     metadata: Partial<IErrorMetadata> = {},
     context: Partial<IErrorContext> = {},
@@ -500,7 +607,7 @@ export abstract class SystemError extends BaseError {
   constructor(
     message: string,
     code: string = CommonErrorCodes.SYS_INTERNAL_ERROR,
-    severity: ErrorSeverity = ErrorSeverity.CRITICAL,
+    severity: ErrorSeverity = ErrorSeverity.HIGH,
     metadata: Partial<IErrorMetadata> = {},
     context: Partial<IErrorContext> = {},
     info: Partial<IErrorInfo> = {},

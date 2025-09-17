@@ -10,3 +10,4 @@ export * from './queries';
 export * from './events';
 export * from './sagas';
 export * from './event-store';
+export * from './bus';

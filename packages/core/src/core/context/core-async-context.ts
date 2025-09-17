@@ -236,6 +236,7 @@ export class CoreAsyncContext implements IAsyncContext {
       createdAt: this._createdAt.toISOString(),
       expiresAt: this._expiresAt?.toISOString(),
       data: this._data,
+      customData: this.getAllCustomData(),
     };
   }
 

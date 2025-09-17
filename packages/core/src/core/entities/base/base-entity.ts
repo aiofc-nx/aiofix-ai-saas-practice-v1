@@ -279,7 +279,10 @@ export abstract class BaseEntity {
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
-      tenantId: partialAuditInfo.tenantId || 'default',
+      tenantId:
+        partialAuditInfo.tenantId !== undefined
+          ? partialAuditInfo.tenantId
+          : 'default',
       version: partialAuditInfo.version || 1,
       lastOperation: partialAuditInfo.lastOperation || 'CREATE',
       lastOperationIp: partialAuditInfo.lastOperationIp || null,
@@ -315,7 +318,7 @@ export abstract class BaseEntity {
       throw new Error('Entity ID cannot be null or empty');
     }
 
-    if (!this._auditInfo.tenantId) {
+    if (!this._auditInfo.tenantId || this._auditInfo.tenantId.trim() === '') {
       throw new Error('Tenant ID cannot be null or empty');
     }
   }

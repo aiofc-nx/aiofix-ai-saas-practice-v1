@@ -21,8 +21,9 @@ export type {
   IErrorBus,
   IExceptionFilter,
 } from './error-handling';
-export * from './interfaces';
+// 接口已迁移到相应的模块中
 export * from './monitoring';
 export * from './testing';
 export * from './entities';
 export * from './cqrs';
+export * from './message-queue';

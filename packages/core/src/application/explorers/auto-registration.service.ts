@@ -47,7 +47,7 @@ import { Injectable } from '@nestjs/common';
 import type { ILoggerService } from '@aiofix/logging';
 import { LogContext } from '@aiofix/logging';
 import { ModuleRef } from '@nestjs/core';
-import type { ICommandBus, IQueryBus, IEventBus } from '../../core/interfaces';
+import type { ICommandBus, IQueryBus, IEventBus } from '../../core/cqrs/bus';
 import { IExplorerResult, IHandlerInfo } from './core-explorer.service';
 
 /**

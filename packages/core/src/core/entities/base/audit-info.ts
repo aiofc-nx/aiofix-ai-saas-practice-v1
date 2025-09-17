@@ -335,15 +335,26 @@ export class AuditInfoBuilder {
     const now = new Date();
 
     return {
-      createdBy: this.auditInfo.createdBy || 'system',
+      createdBy:
+        this.auditInfo.createdBy !== undefined
+          ? this.auditInfo.createdBy
+          : 'system',
       updatedBy:
-        this.auditInfo.updatedBy || this.auditInfo.createdBy || 'system',
+        this.auditInfo.updatedBy !== undefined
+          ? this.auditInfo.updatedBy
+          : this.auditInfo.createdBy !== undefined
+            ? this.auditInfo.createdBy
+            : 'system',
       deletedBy: null,
       createdAt: now,
       updatedAt: now,
       deletedAt: null,
-      tenantId: this.auditInfo.tenantId || 'default',
-      version: this.auditInfo.version || 1,
+      tenantId:
+        this.auditInfo.tenantId !== undefined
+          ? this.auditInfo.tenantId
+          : 'default',
+      version:
+        this.auditInfo.version !== undefined ? this.auditInfo.version : 1,
       lastOperation: this.auditInfo.lastOperation || 'CREATE',
       lastOperationIp: this.auditInfo.lastOperationIp || null,
       lastOperationUserAgent: this.auditInfo.lastOperationUserAgent || null,

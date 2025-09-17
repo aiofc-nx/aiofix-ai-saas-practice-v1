@@ -1,659 +1,412 @@
 /**
- * 性能监控接口定义
+ * 性能监控器接口
  *
- * 定义了性能监控系统的核心接口，包括性能指标收集、
- * 性能分析、性能报告、性能告警等功能。
+ * @description 定义性能监控系统的核心功能和行为
+ * 性能监控器负责收集、存储、分析和报告系统性能指标
  *
  * ## 业务规则
  *
- * ### 性能指标收集规则
- * - 支持多种性能指标类型（响应时间、吞吐量、错误率等）
- * - 支持自定义性能指标
- * - 支持性能指标聚合和统计
- * - 支持性能指标历史数据存储
+ * ### 指标收集规则
+ * - 支持实时和批量指标收集
+ * - 提供指标的去重和聚合功能
+ * - 支持自定义指标收集器
  *
- * ### 性能分析规则
- * - 支持性能趋势分析
- * - 支持性能瓶颈识别
- * - 支持性能对比分析
- * - 支持性能预测分析
+ * ### 数据存储规则
+ * - 支持指标的持久化存储
+ * - 提供数据压缩和归档功能
+ * - 支持数据的备份和恢复
  *
- * ### 性能报告规则
- * - 支持实时性能报告
- * - 支持历史性能报告
- * - 支持自定义报告格式
- * - 支持报告导出功能
+ * ### 监控告警规则
+ * - 支持阈值告警和异常检测
+ * - 提供多种告警通知方式
+ * - 支持告警的抑制和恢复
  *
- * ### 性能告警规则
- * - 支持性能阈值告警
- * - 支持性能异常告警
- * - 支持告警通知机制
- * - 支持告警抑制和恢复
+ * ### 性能优化规则
+ * - 支持指标的采样和过滤
+ * - 提供数据缓存和预聚合
+ * - 支持异步处理和批量操作
  *
- * @description 性能监控接口定义
+ * @example
+ * ```typescript
+ * const monitor = new CorePerformanceMonitor();
+ *
+ * // 启动监控
+ * await monitor.start();
+ *
+ * // 收集指标
+ * const metrics = await monitor.collectMetrics();
+ *
+ * // 查询历史数据
+ * const history = await monitor.queryMetrics({
+ *   startTime: new Date(Date.now() - 3600000),
+ *   endTime: new Date()
+ * });
+ *
+ * // 设置告警
+ * await monitor.setAlert('cpu_usage', {
+ *   threshold: 80,
+ *   operator: 'greater_than',
+ *   notification: 'email'
+ * });
+ * ```
+ *
  * @since 1.0.0
  */
 
-import { Observable } from 'rxjs';
-import type { IAsyncContext } from '../context/async-context.interface';
+import type {
+  IPerformanceMetrics,
+  IPerformanceMetricsAggregation,
+  IPerformanceMetricsQueryOptions,
+  IPerformanceMetricsStatistics,
+} from './performance-metrics.interface';
 
 /**
- * 性能指标类型枚举
+ * 性能收集器接口
+ *
+ * @description 定义性能指标收集器的基本行为
  */
-export enum PerformanceMetricType {
+export interface IPerformanceCollector {
   /**
-   * 响应时间
+   * 收集性能指标
+   *
+   * @description 收集指定类型的性能指标
+   * 收集器应该实现具体的指标收集逻辑
+   *
+   * @param metricType 指标类型
+   * @param options 收集选项
+   * @returns 收集到的指标数据
+   *
+   * @example
+   * ```typescript
+   * const systemMetrics = await collector.collect('system', {
+   *   includeCpu: true,
+   *   includeMemory: true
+   * });
+   * ```
    */
-  RESPONSE_TIME = 'response_time',
+  collect(
+    metricType: string,
+    options?: Record<string, unknown>,
+  ): Promise<Record<string, number>>;
 
   /**
-   * 吞吐量
+   * 获取支持的指标类型
+   *
+   * @description 返回此收集器支持的指标类型列表
+   *
+   * @returns 支持的指标类型列表
    */
-  THROUGHPUT = 'throughput',
+  getSupportedTypes(): string[];
 
   /**
-   * 错误率
+   * 检查收集器是否健康
+   *
+   * @description 检查收集器的健康状态
+   *
+   * @returns 收集器是否健康
    */
-  ERROR_RATE = 'error_rate',
+  isHealthy(): Promise<boolean>;
 
   /**
-   * CPU 使用率
+   * 获取收集器名称
+   *
+   * @description 返回收集器的唯一名称
+   *
+   * @returns 收集器名称
    */
-  CPU_USAGE = 'cpu_usage',
-
-  /**
-   * 内存使用率
-   */
-  MEMORY_USAGE = 'memory_usage',
-
-  /**
-   * 磁盘使用率
-   */
-  DISK_USAGE = 'disk_usage',
-
-  /**
-   * 网络使用率
-   */
-  NETWORK_USAGE = 'network_usage',
-
-  /**
-   * 数据库连接数
-   */
-  DATABASE_CONNECTIONS = 'database_connections',
-
-  /**
-   * 缓存命中率
-   */
-  CACHE_HIT_RATE = 'cache_hit_rate',
-
-  /**
-   * 队列长度
-   */
-  QUEUE_LENGTH = 'queue_length',
-
-  /**
-   * 自定义指标
-   */
-  CUSTOM = 'custom',
-}
-
-/**
- * 性能指标聚合类型枚举
- */
-export enum PerformanceAggregationType {
-  /**
-   * 平均值
-   */
-  AVERAGE = 'average',
-
-  /**
-   * 最小值
-   */
-  MIN = 'min',
-
-  /**
-   * 最大值
-   */
-  MAX = 'max',
-
-  /**
-   * 总和
-   */
-  SUM = 'sum',
-
-  /**
-   * 计数
-   */
-  COUNT = 'count',
-
-  /**
-   * 百分位数
-   */
-  PERCENTILE = 'percentile',
-
-  /**
-   * 中位数
-   */
-  MEDIAN = 'median',
-
-  /**
-   * 标准差
-   */
-  STANDARD_DEVIATION = 'standard_deviation',
-}
-
-/**
- * 性能告警级别枚举
- */
-export enum PerformanceAlertLevel {
-  /**
-   * 信息
-   */
-  INFO = 'info',
-
-  /**
-   * 警告
-   */
-  WARNING = 'warning',
-
-  /**
-   * 错误
-   */
-  ERROR = 'error',
-
-  /**
-   * 严重
-   */
-  CRITICAL = 'critical',
-}
-
-/**
- * 性能指标接口
- */
-export interface IPerformanceMetric {
-  /**
-   * 指标ID
-   */
-  id: string;
-
-  /**
-   * 指标名称
-   */
-  name: string;
-
-  /**
-   * 指标类型
-   */
-  type: PerformanceMetricType;
-
-  /**
-   * 指标值
-   */
-  value: number;
-
-  /**
-   * 指标单位
-   */
-  unit: string;
-
-  /**
-   * 指标标签
-   */
-  tags: Record<string, string>;
-
-  /**
-   * 指标元数据
-   */
-  metadata: Record<string, unknown>;
-
-  /**
-   * 时间戳
-   */
-  timestamp: Date;
-
-  /**
-   * 租户ID
-   */
-  tenantId?: string;
-
-  /**
-   * 用户ID
-   */
-  userId?: string;
-
-  /**
-   * 组织ID
-   */
-  organizationId?: string;
-
-  /**
-   * 部门ID
-   */
-  departmentId?: string;
-
-  /**
-   * 请求ID
-   */
-  requestId?: string;
-
-  /**
-   * 关联ID
-   */
-  correlationId?: string;
-}
-
-/**
- * 性能指标聚合结果接口
- */
-export interface IPerformanceAggregation {
-  /**
-   * 聚合类型
-   */
-  aggregationType: PerformanceAggregationType;
-
-  /**
-   * 聚合值
-   */
-  value: number;
-
-  /**
-   * 聚合时间范围
-   */
-  timeRange: {
-    start: Date;
-    end: Date;
-  };
-
-  /**
-   * 聚合标签
-   */
-  tags: Record<string, string>;
-
-  /**
-   * 样本数量
-   */
-  sampleCount: number;
-
-  /**
-   * 百分位数（仅当聚合类型为 PERCENTILE 时）
-   */
-  percentile?: number;
-}
-
-/**
- * 性能报告接口
- */
-export interface IPerformanceReport {
-  /**
-   * 报告ID
-   */
-  id: string;
-
-  /**
-   * 报告名称
-   */
-  name: string;
-
-  /**
-   * 报告类型
-   */
-  type: string;
-
-  /**
-   * 报告时间范围
-   */
-  timeRange: {
-    start: Date;
-    end: Date;
-  };
-
-  /**
-   * 报告数据
-   */
-  data: {
-    metrics: IPerformanceMetric[];
-    aggregations: IPerformanceAggregation[];
-    summary: Record<string, unknown>;
-  };
-
-  /**
-   * 报告元数据
-   */
-  metadata: Record<string, unknown>;
-
-  /**
-   * 生成时间
-   */
-  generatedAt: Date;
-
-  /**
-   * 租户ID
-   */
-  tenantId?: string;
+  getName(): string;
 }
 
 /**
  * 性能告警接口
+ *
+ * @description 定义性能告警的配置和处理
  */
 export interface IPerformanceAlert {
-  /**
-   * 告警ID
-   */
-  id: string;
-
-  /**
-   * 告警名称
-   */
-  name: string;
-
-  /**
-   * 告警级别
-   */
-  level: PerformanceAlertLevel;
-
-  /**
-   * 告警消息
-   */
-  message: string;
-
-  /**
-   * 告警指标
-   */
-  metric: {
-    name: string;
-    type: PerformanceMetricType;
-    value: number;
-    threshold: number;
-  };
-
-  /**
-   * 告警时间
-   */
-  timestamp: Date;
-
-  /**
-   * 告警状态
-   */
-  status: 'active' | 'resolved' | 'suppressed';
-
-  /**
-   * 告警标签
-   */
-  tags: Record<string, string>;
-
-  /**
-   * 告警元数据
-   */
-  metadata: Record<string, unknown>;
-
-  /**
-   * 租户ID
-   */
-  tenantId?: string;
+  /** 告警ID */
+  readonly id: string;
+  /** 告警名称 */
+  readonly name: string;
+  /** 指标名称 */
+  readonly metricName: string;
+  /** 告警阈值 */
+  readonly threshold: number;
+  /** 比较操作符 */
+  readonly operator: 'greater_than' | 'less_than' | 'equals' | 'not_equals';
+  /** 告警级别 */
+  readonly severity: 'low' | 'medium' | 'high' | 'critical';
+  /** 是否启用 */
+  readonly enabled: boolean;
+  /** 告警描述 */
+  readonly description?: string;
+  /** 通知方式 */
+  readonly notifications: string[];
+  /** 创建时间 */
+  readonly createdAt: Date;
+  /** 最后触发时间 */
+  readonly lastTriggeredAt?: Date;
+  /** 触发次数 */
+  readonly triggerCount: number;
 }
 
 /**
- * 性能监控配置接口
- */
-export interface IPerformanceMonitorConfiguration {
-  /**
-   * 是否启用监控
-   */
-  enabled: boolean;
-
-  /**
-   * 监控间隔（毫秒）
-   */
-  monitoringInterval: number;
-
-  /**
-   * 数据保留时间（天）
-   */
-  dataRetentionDays: number;
-
-  /**
-   * 是否启用实时监控
-   */
-  enableRealTimeMonitoring: boolean;
-
-  /**
-   * 是否启用历史数据存储
-   */
-  enableHistoricalStorage: boolean;
-
-  /**
-   * 是否启用告警
-   */
-  enableAlerts: boolean;
-
-  /**
-   * 告警阈值配置
-   */
-  alertThresholds: Record<
-    string,
-    {
-      warning: number;
-      error: number;
-      critical: number;
-    }
-  >;
-
-  /**
-   * 是否启用性能分析
-   */
-  enableAnalysis: boolean;
-
-  /**
-   * 分析窗口大小（分钟）
-   */
-  analysisWindowSize: number;
-
-  /**
-   * 是否启用报告生成
-   */
-  enableReporting: boolean;
-
-  /**
-   * 报告生成间隔（小时）
-   */
-  reportGenerationInterval: number;
-
-  /**
-   * 是否启用多租户
-   */
-  enableMultiTenant: boolean;
-
-  /**
-   * 是否启用压缩
-   */
-  enableCompression: boolean;
-
-  /**
-   * 是否启用加密
-   */
-  enableEncryption: boolean;
-}
-
-/**
- * 性能监控统计信息接口
- */
-export interface IPerformanceMonitorStatistics {
-  /**
-   * 总指标数量
-   */
-  totalMetrics: number;
-
-  /**
-   * 活跃指标数量
-   */
-  activeMetrics: number;
-
-  /**
-   * 总告警数量
-   */
-  totalAlerts: number;
-
-  /**
-   * 活跃告警数量
-   */
-  activeAlerts: number;
-
-  /**
-   * 总报告数量
-   */
-  totalReports: number;
-
-  /**
-   * 按类型统计
-   */
-  byMetricType: Record<PerformanceMetricType, number>;
-
-  /**
-   * 按告警级别统计
-   */
-  byAlertLevel: Record<PerformanceAlertLevel, number>;
-
-  /**
-   * 按租户统计
-   */
-  byTenant: Record<string, number>;
-
-  /**
-   * 按时间统计
-   */
-  byTime: {
-    lastHour: number;
-    lastDay: number;
-    lastWeek: number;
-    lastMonth: number;
-  };
-
-  /**
-   * 最后更新时间
-   */
-  lastUpdatedAt: Date;
-}
-
-/**
- * 性能监控接口
+ * 性能监控器接口
+ *
+ * @description 定义性能监控系统的核心功能
  */
 export interface IPerformanceMonitor {
   /**
-   * 记录性能指标
-   */
-  recordMetric(
-    metric: IPerformanceMetric,
-    context?: IAsyncContext,
-  ): Observable<boolean>;
-
-  /**
-   * 批量记录性能指标
-   */
-  recordMetrics(
-    metrics: IPerformanceMetric[],
-    context?: IAsyncContext,
-  ): Observable<boolean>;
-
-  /**
-   * 获取性能指标
-   */
-  getMetrics(
-    name: string,
-    timeRange: { start: Date; end: Date },
-    context?: IAsyncContext,
-  ): Observable<IPerformanceMetric[]>;
-
-  /**
-   * 获取性能指标聚合
-   */
-  getMetricAggregation(
-    name: string,
-    aggregationType: PerformanceAggregationType,
-    timeRange: { start: Date; end: Date },
-    context?: IAsyncContext,
-  ): Observable<IPerformanceAggregation | null>;
-
-  /**
-   * 获取性能报告
-   */
-  getPerformanceReport(
-    reportId: string,
-    context?: IAsyncContext,
-  ): Observable<IPerformanceReport | null>;
-
-  /**
-   * 生成性能报告
-   */
-  generatePerformanceReport(
-    name: string,
-    type: string,
-    timeRange: { start: Date; end: Date },
-    context?: IAsyncContext,
-  ): Observable<IPerformanceReport>;
-
-  /**
-   * 获取性能告警
-   */
-  getAlerts(
-    level?: PerformanceAlertLevel,
-    status?: string,
-    context?: IAsyncContext,
-  ): Observable<IPerformanceAlert[]>;
-
-  /**
-   * 创建性能告警
-   */
-  createAlert(
-    alert: Omit<IPerformanceAlert, 'id' | 'timestamp'>,
-    context?: IAsyncContext,
-  ): Observable<IPerformanceAlert>;
-
-  /**
-   * 解决性能告警
-   */
-  resolveAlert(alertId: string, context?: IAsyncContext): Observable<boolean>;
-
-  /**
-   * 抑制性能告警
-   */
-  suppressAlert(
-    alertId: string,
-    duration: number,
-    context?: IAsyncContext,
-  ): Observable<boolean>;
-
-  /**
-   * 获取性能监控统计信息
-   */
-  getStatistics(
-    context?: IAsyncContext,
-  ): Observable<IPerformanceMonitorStatistics>;
-
-  /**
-   * 清理过期数据
-   */
-  cleanupExpiredData(
-    retentionDays: number,
-    context?: IAsyncContext,
-  ): Observable<number>;
-
-  /**
-   * 健康检查
-   */
-  healthCheck(context?: IAsyncContext): Observable<boolean>;
-
-  /**
-   * 启动监控
+   * 启动性能监控
+   *
+   * @description 启动性能监控服务
+   * 开始收集性能指标和运行监控任务
+   *
+   * @returns 启动是否成功
+   *
+   * @example
+   * ```typescript
+   * await monitor.start();
+   * ```
    */
   start(): Promise<void>;
 
   /**
-   * 停止监控
+   * 停止性能监控
+   *
+   * @description 停止性能监控服务
+   * 停止收集性能指标和运行监控任务
+   *
+   * @returns 停止是否成功
+   *
+   * @example
+   * ```typescript
+   * await monitor.stop();
+   * ```
    */
   stop(): Promise<void>;
 
   /**
-   * 检查是否已启动
+   * 收集性能指标
+   *
+   * @description 收集当前的性能指标
+   * 包括系统、应用和业务指标
+   *
+   * @param options 收集选项
+   * @returns 性能指标数据
+   *
+   * @example
+   * ```typescript
+   * const metrics = await monitor.collectMetrics({
+   *   includeSystem: true,
+   *   includeApplication: true,
+   *   includeBusiness: false
+   * });
+   * ```
    */
-  isStarted(): boolean;
+  collectMetrics(options?: {
+    includeSystem?: boolean;
+    includeApplication?: boolean;
+    includeBusiness?: boolean;
+    customCollectors?: string[];
+  }): Promise<IPerformanceMetrics>;
+
+  /**
+   * 存储性能指标
+   *
+   * @description 将性能指标存储到持久化存储中
+   *
+   * @param metrics 性能指标数据
+   * @returns 存储是否成功
+   *
+   * @example
+   * ```typescript
+   * await monitor.storeMetrics(metrics);
+   * ```
+   */
+  storeMetrics(metrics: IPerformanceMetrics): Promise<boolean>;
+
+  /**
+   * 查询性能指标
+   *
+   * @description 查询历史性能指标数据
+   * 支持时间范围、过滤条件和聚合操作
+   *
+   * @param options 查询选项
+   * @returns 性能指标列表
+   *
+   * @example
+   * ```typescript
+   * const metrics = await monitor.queryMetrics({
+   *   startTime: new Date(Date.now() - 3600000),
+   *   endTime: new Date(),
+   *   tenantId: 'tenant-123'
+   * });
+   * ```
+   */
+  queryMetrics(
+    options: IPerformanceMetricsQueryOptions,
+  ): Promise<IPerformanceMetrics[]>;
+
+  /**
+   * 聚合性能指标
+   *
+   * @description 对性能指标进行聚合统计
+   * 支持平均值、最大值、最小值等聚合操作
+   *
+   * @param options 聚合选项
+   * @returns 聚合后的指标数据
+   *
+   * @example
+   * ```typescript
+   * const aggregation = await monitor.aggregateMetrics({
+   *   startTime: new Date(Date.now() - 86400000),
+   *   endTime: new Date(),
+   *   aggregationInterval: 3600000
+   * });
+   * ```
+   */
+  aggregateMetrics(
+    options: IPerformanceMetricsQueryOptions,
+  ): Promise<IPerformanceMetricsAggregation>;
+
+  /**
+   * 获取性能统计信息
+   *
+   * @description 获取性能指标的统计信息
+   * 包括平均值、峰值、趋势等统计指标
+   *
+   * @param options 统计选项
+   * @returns 性能统计信息
+   *
+   * @example
+   * ```typescript
+   * const stats = await monitor.getStatistics({
+   *   startTime: new Date(Date.now() - 86400000),
+   *   endTime: new Date()
+   * });
+   * ```
+   */
+  getStatistics(
+    options: IPerformanceMetricsQueryOptions,
+  ): Promise<IPerformanceMetricsStatistics>;
+
+  /**
+   * 设置性能告警
+   *
+   * @description 设置性能指标的告警规则
+   * 当指标超过阈值时触发告警
+   *
+   * @param alert 告警配置
+   * @returns 设置是否成功
+   *
+   * @example
+   * ```typescript
+   * await monitor.setAlert({
+   *   id: 'cpu-alert',
+   *   name: 'CPU使用率告警',
+   *   metricName: 'cpu_usage',
+   *   threshold: 80,
+   *   operator: 'greater_than',
+   *   severity: 'high',
+   *   notifications: ['email', 'slack']
+   * });
+   * ```
+   */
+  setAlert(
+    alert: Omit<IPerformanceAlert, 'createdAt' | 'triggerCount'>,
+  ): Promise<boolean>;
+
+  /**
+   * 删除性能告警
+   *
+   * @description 删除指定的性能告警
+   *
+   * @param alertId 告警ID
+   * @returns 删除是否成功
+   *
+   * @example
+   * ```typescript
+   * await monitor.removeAlert('cpu-alert');
+   * ```
+   */
+  removeAlert(alertId: string): Promise<boolean>;
+
+  /**
+   * 获取所有告警
+   *
+   * @description 获取所有配置的性能告警
+   *
+   * @returns 告警列表
+   *
+   * @example
+   * ```typescript
+   * const alerts = await monitor.getAlerts();
+   * ```
+   */
+  getAlerts(): Promise<IPerformanceAlert[]>;
+
+  /**
+   * 注册性能收集器
+   *
+   * @description 注册自定义性能收集器
+   *
+   * @param collector 性能收集器
+   * @returns 注册是否成功
+   *
+   * @example
+   * ```typescript
+   * await monitor.registerCollector(customCollector);
+   * ```
+   */
+  registerCollector(collector: IPerformanceCollector): Promise<boolean>;
+
+  /**
+   * 注销性能收集器
+   *
+   * @description 注销指定的性能收集器
+   *
+   * @param collectorName 收集器名称
+   * @returns 注销是否成功
+   *
+   * @example
+   * ```typescript
+   * await monitor.unregisterCollector('custom-collector');
+   * ```
+   */
+  unregisterCollector(collectorName: string): Promise<boolean>;
+
+  /**
+   * 检查监控器是否健康
+   *
+   * @description 检查性能监控器的健康状态
+   *
+   * @returns 监控器是否健康
+   *
+   * @example
+   * ```typescript
+   * const isHealthy = await monitor.isHealthy();
+   * ```
+   */
+  isHealthy(): Promise<boolean>;
+
+  /**
+   * 获取监控器统计信息
+   *
+   * @description 获取监控器的运行统计信息
+   *
+   * @returns 监控器统计信息
+   *
+   * @example
+   * ```typescript
+   * const stats = monitor.getMonitorStatistics();
+   * ```
+   */
+  getMonitorStatistics(): {
+    readonly isRunning: boolean;
+    readonly startTime?: Date;
+    readonly totalMetricsCollected: number;
+    readonly totalAlertsTriggered: number;
+    readonly registeredCollectors: number;
+    readonly activeAlerts: number;
+  };
 }

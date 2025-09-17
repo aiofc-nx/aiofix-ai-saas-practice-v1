@@ -5,4 +5,4 @@
  * @since 1.0.0
  */
 
-export * from './cqrs-bus.interface';
+// CQRS 总线接口已迁移到 ../cqrs/bus/cqrs-bus.interface.ts

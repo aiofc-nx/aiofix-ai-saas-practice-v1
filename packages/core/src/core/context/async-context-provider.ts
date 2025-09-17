@@ -7,7 +7,7 @@
  * @description 异步上下文提供者实现
  * @since 1.0.0
  */
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import type { ILoggerService } from '@aiofix/logging';
 import { LogContext } from '@aiofix/logging';
 import { IAsyncContextProvider, IContextData } from './async-context.interface';
@@ -20,7 +20,9 @@ export class HttpRequestContextProvider implements IAsyncContextProvider {
   public readonly name = 'HttpRequestContextProvider';
   public readonly priority = 100;
 
-  constructor(private readonly logger: ILoggerService) {}
+  constructor(
+    @Inject('ILoggerService') private readonly logger: ILoggerService,
+  ) {}
 
   /**
    * 从请求中提取上下文数据
@@ -117,7 +119,9 @@ export class GraphQLRequestContextProvider implements IAsyncContextProvider {
   public readonly name = 'GraphQLRequestContextProvider';
   public readonly priority = 90;
 
-  constructor(private readonly logger: ILoggerService) {}
+  constructor(
+    @Inject('ILoggerService') private readonly logger: ILoggerService,
+  ) {}
 
   /**
    * 从请求中提取上下文数据
@@ -218,7 +222,9 @@ export class WebSocketContextProvider implements IAsyncContextProvider {
   public readonly name = 'WebSocketContextProvider';
   public readonly priority = 80;
 
-  constructor(private readonly logger: ILoggerService) {}
+  constructor(
+    @Inject('ILoggerService') private readonly logger: ILoggerService,
+  ) {}
 
   /**
    * 从请求中提取上下文数据
@@ -313,7 +319,9 @@ export class CliCommandContextProvider implements IAsyncContextProvider {
   public readonly name = 'CliCommandContextProvider';
   public readonly priority = 70;
 
-  constructor(private readonly logger: ILoggerService) {}
+  constructor(
+    @Inject('ILoggerService') private readonly logger: ILoggerService,
+  ) {}
 
   /**
    * 从请求中提取上下文数据
@@ -348,28 +356,28 @@ export class CliCommandContextProvider implements IAsyncContextProvider {
       }
     }
 
-    // 从环境变量中提取信息
-    if (process.env.TENANT_ID) {
+    // 从环境变量中提取信息（仅作为后备）
+    if (!data.tenantId && process.env.TENANT_ID) {
       data.tenantId = process.env.TENANT_ID;
     }
 
-    if (process.env.USER_ID) {
+    if (!data.userId && process.env.USER_ID) {
       data.userId = process.env.USER_ID;
     }
 
-    if (process.env.ORGANIZATION_ID) {
+    if (!data.organizationId && process.env.ORGANIZATION_ID) {
       data.organizationId = process.env.ORGANIZATION_ID;
     }
 
-    if (process.env.DEPARTMENT_ID) {
+    if (!data.departmentId && process.env.DEPARTMENT_ID) {
       data.departmentId = process.env.DEPARTMENT_ID;
     }
 
-    if (process.env.REQUEST_ID) {
+    if (!data.requestId && process.env.REQUEST_ID) {
       data.requestId = process.env.REQUEST_ID;
     }
 
-    if (process.env.CORRELATION_ID) {
+    if (!data.correlationId && process.env.CORRELATION_ID) {
       data.correlationId = process.env.CORRELATION_ID;
     }
 
@@ -404,7 +412,9 @@ export class SystemTaskContextProvider implements IAsyncContextProvider {
   public readonly name = 'SystemTaskContextProvider';
   public readonly priority = 60;
 
-  constructor(private readonly logger: ILoggerService) {}
+  constructor(
+    @Inject('ILoggerService') private readonly logger: ILoggerService,
+  ) {}
 
   /**
    * 从请求中提取上下文数据
@@ -443,12 +453,12 @@ export class SystemTaskContextProvider implements IAsyncContextProvider {
       }
     }
 
-    // 从环境变量中提取信息
-    if (process.env.SYSTEM_TENANT_ID) {
+    // 从环境变量中提取信息（仅作为后备）
+    if (!data.tenantId && process.env.SYSTEM_TENANT_ID) {
       data.tenantId = process.env.SYSTEM_TENANT_ID;
     }
 
-    if (process.env.SYSTEM_USER_ID) {
+    if (!data.userId && process.env.SYSTEM_USER_ID) {
       data.userId = process.env.SYSTEM_USER_ID;
     }
 
@@ -483,7 +493,9 @@ export class SystemTaskContextProvider implements IAsyncContextProvider {
 export class AsyncContextProviderManager {
   private readonly providers: IAsyncContextProvider[] = [];
 
-  constructor(private readonly logger: ILoggerService) {}
+  constructor(
+    @Inject('ILoggerService') private readonly logger: ILoggerService,
+  ) {}
 
   /**
    * 添加提供者

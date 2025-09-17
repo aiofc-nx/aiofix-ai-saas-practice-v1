@@ -54,10 +54,27 @@
 
 import { SetMetadata } from '@nestjs/common';
 import type { IAsyncContext } from '../context/async-context.interface';
-import {
-  PerformanceMetricType,
-  PerformanceAlertLevel,
-} from './performance-monitor.interface';
+
+/**
+ * 性能指标类型枚举
+ */
+export enum PerformanceMetricType {
+  RESPONSE_TIME = 'response_time',
+  THROUGHPUT = 'throughput',
+  ERROR_RATE = 'error_rate',
+  CACHE_HIT_RATE = 'cache_hit_rate',
+  CUSTOM = 'custom',
+}
+
+/**
+ * 性能告警级别枚举
+ */
+export enum PerformanceAlertLevel {
+  LOW = 'low',
+  WARNING = 'warning',
+  ERROR = 'error',
+  CRITICAL = 'critical',
+}
 
 /**
  * 性能监控选项接口
@@ -194,23 +211,68 @@ export function PerformanceMonitor(
       // 方法装饰器
       const originalMethod = descriptor.value;
 
-      descriptor.value = async function (...args: any[]) {
+      descriptor.value = function (...args: any[]) {
         const startTime = Date.now();
         let error: Error | undefined;
         let result: any;
 
         try {
-          result = await originalMethod.apply(this, args);
-          return result;
+          result = originalMethod.apply(this, args);
+
+          // 如果结果是Promise，则处理异步情况
+          if (result && typeof result.then === 'function') {
+            return result
+              .then((resolvedResult: any) => {
+                const endTime = Date.now();
+                const executionTime = endTime - startTime;
+
+                // 这里应该调用性能监控服务来记录指标
+                // 暂时使用控制台输出作为示例
+                console.log(`Performance Monitor - ${options.metricName}:`, {
+                  executionTime,
+                  error: error?.message,
+                  timestamp: new Date(),
+                  tags: options.tags,
+                  metadata: options.metadata,
+                });
+
+                return resolvedResult;
+              })
+              .catch((err: Error) => {
+                error = err;
+                const endTime = Date.now();
+                const executionTime = endTime - startTime;
+
+                console.log(`Performance Monitor - ${options.metricName}:`, {
+                  executionTime,
+                  error: error?.message,
+                  timestamp: new Date(),
+                  tags: options.tags,
+                  metadata: options.metadata,
+                });
+
+                throw err;
+              });
+          } else {
+            // 同步方法
+            const endTime = Date.now();
+            const executionTime = endTime - startTime;
+
+            console.log(`Performance Monitor - ${options.metricName}:`, {
+              executionTime,
+              error: error?.message,
+              timestamp: new Date(),
+              tags: options.tags,
+              metadata: options.metadata,
+            });
+
+            return result;
+          }
         } catch (err) {
           error = err as Error;
-          throw err;
-        } finally {
           const endTime = Date.now();
           const executionTime = endTime - startTime;
 
-          // 这里应该调用性能监控服务来记录指标
-          // 暂时使用控制台输出作为示例
           console.log(`Performance Monitor - ${options.metricName}:`, {
             executionTime,
             error: error?.message,
@@ -218,6 +280,8 @@ export function PerformanceMonitor(
             tags: options.tags,
             metadata: options.metadata,
           });
+
+          throw err;
         }
       };
 

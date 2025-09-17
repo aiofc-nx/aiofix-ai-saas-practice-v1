@@ -49,7 +49,7 @@
  *
  * @since 1.0.0
  */
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import type { ILoggerService } from '@aiofix/logging';
 import { LogContext } from '@aiofix/logging';
 import { AsyncLocalStorage } from 'async_hooks';
@@ -114,7 +114,9 @@ export class CoreAsyncContextManager implements IAsyncContextManager {
   private _isStarted = false;
   private _cleanupInterval?: ReturnType<typeof globalThis.setInterval>;
 
-  constructor(private readonly logger: ILoggerService) {}
+  constructor(
+    @Inject('ILoggerService') private readonly logger: ILoggerService,
+  ) {}
 
   /**
    * 创建新的异步上下文
@@ -142,7 +144,8 @@ export class CoreAsyncContextManager implements IAsyncContextManager {
    * 设置当前异步上下文
    */
   public setCurrentContext(context: IAsyncContext): void {
-    this.asyncLocalStorage.enterWith(context);
+    // 使用 run 方法设置上下文
+    this.asyncLocalStorage.run(context, () => {});
     this.logger.debug(
       `Set current context: ${context.getId()}`,
       LogContext.SYSTEM,
@@ -154,6 +157,7 @@ export class CoreAsyncContextManager implements IAsyncContextManager {
    * 清除当前异步上下文
    */
   public clearCurrentContext(): void {
+    // 使用 exit 方法退出当前上下文
     this.asyncLocalStorage.exit(() => {});
     this.logger.debug('Cleared current context', LogContext.SYSTEM);
   }

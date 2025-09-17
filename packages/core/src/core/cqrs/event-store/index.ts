@@ -8,11 +8,14 @@
  */
 
 // 接口和类型
-export type { IEventStore, IEventStreamResult } from './event-store.interface';
-export type { IDatabase } from './core-event-store';
+export type {
+  IEventStore as ICoreEventStore,
+  IEventStreamResult as ICoreEventStreamResult,
+} from './event-store.interface';
+export type { IDatabase as ICoreDatabase } from './core-event-store';
 
 // 实现类
-export { CoreEventStore } from './core-event-store';
+export { CoreEventStore as CoreEventStoreImpl } from './core-event-store';
 
 // 异常类
-export { ConcurrencyError } from './concurrency-error';
+export { ConcurrencyError as CoreConcurrencyError } from './concurrency-error';
