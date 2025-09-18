@@ -171,7 +171,7 @@ describe('BaseQuery', () => {
 
       // 等待一小段时间确保时间不同
       await new Promise<void>((resolve) => {
-        global.setTimeout(resolve, 1);
+        global.setTimeout(resolve, 10);
       });
 
       const query2 = new TestQuery('filter2');

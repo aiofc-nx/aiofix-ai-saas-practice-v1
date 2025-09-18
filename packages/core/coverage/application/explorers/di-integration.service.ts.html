@@ -23,16 +23,16 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">11.62% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/86</span>
+                <span class='fraction'>10/86</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">34.09% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/44</span>
+                <span class='fraction'>15/44</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">9.52% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/84</span>
+                <span class='fraction'>8/84</span>
             </div>
         
             
@@ -646,15 +646,15 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -774,7 +774,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1186,15 +1186,15 @@
  *
  * @since 1.0.0
  */
-<span class="cstat-no" title="statement not covered" >import { Injectable, DynamicModule } from '@nestjs/common';</span>
+import { Injectable, DynamicModule } from '@nestjs/common';
 import type { ILoggerService } from '@aiofix/logging';
-<span class="cstat-no" title="statement not covered" >import { LogContext } from '@aiofix/logging';</span>
-<span class="cstat-no" title="statement not covered" >import { ModuleRef } from '@nestjs/core';</span>
-<span class="cstat-no" title="statement not covered" >import { NestApplication } from '@nestjs/core';</span>
+import { LogContext } from '@aiofix/logging';
+import { ModuleRef } from '@nestjs/core';
+import { NestApplication } from '@nestjs/core';
 import { Type } from '@nestjs/common';
-<span class="cstat-no" title="statement not covered" >import { CoreExplorerService } from './core-explorer.service';</span>
-<span class="cstat-no" title="statement not covered" >import { AutoRegistrationService } from './auto-registration.service';</span>
-<span class="cstat-no" title="statement not covered" >import { ModuleScannerService } from './module-scanner.service';</span>
+import { CoreExplorerService } from './core-explorer.service';
+import { AutoRegistrationService } from './auto-registration.service';
+import { ModuleScannerService } from './module-scanner.service';
 import { IHandlerInfo } from './core-explorer.service';
 &nbsp;
 /**
@@ -1314,7 +1314,7 @@ export interface IIntegrationStatus {
  * 依赖注入集成服务
  */
 @Injectable()
-export class <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >DIIntegrationService<span class="cstat-no" title="statement not covered" > </span>{</span></span>
+export class DIIntegrationService {
   private integrationStatus: IIntegrationStatus = <span class="cstat-no" title="statement not covered" >{</span>
     initialized: false,
     registeredModules: 0,
@@ -1327,14 +1327,14 @@ export class <span class="cstat-no" title="statement not covered" ><span class="
 <span class="fstat-no" title="function not covered" >  constructor(</span>
     private readonly <span class="cstat-no" title="statement not covered" >logger: ILoggerService,</span>
     // @ts-ignore - 这些依赖将在后续实现中使用
-    private readonly <span class="cstat-no" title="statement not covered" >_app: N</span>estApplication,
+    private readonly <span class="cstat-no" title="statement not covered" >_app: N</span>estApplication<span class="branch-1 cbranch-no" title="branch not covered" >,</span>
     // @ts-ignore - 这些依赖将在后续实现中使用
-    private readonly <span class="cstat-no" title="statement not covered" >_moduleRef: M</span>oduleRef,
+    private readonly <span class="cstat-no" title="statement not covered" >_moduleRef: M</span>oduleRef<span class="branch-1 cbranch-no" title="branch not covered" >,</span>
     // @ts-ignore - 这些依赖将在后续实现中使用
-    private readonly <span class="cstat-no" title="statement not covered" >_explorerService: C</span>oreExplorerService,
+    private readonly <span class="cstat-no" title="statement not covered" >_explorerService: C</span>oreExplorerService<span class="branch-1 cbranch-no" title="branch not covered" >,</span>
     // @ts-ignore - 这些依赖将在后续实现中使用
-    private readonly <span class="cstat-no" title="statement not covered" >_registrationService: A</span>utoRegistrationService,
-    private readonly <span class="cstat-no" title="statement not covered" >scannerService: M</span>oduleScannerService,
+    private readonly <span class="cstat-no" title="statement not covered" >_registrationService: A</span>utoRegistrationService<span class="branch-1 cbranch-no" title="branch not covered" >,</span>
+    private readonly <span class="cstat-no" title="statement not covered" >scannerService: M</span>oduleScannerService<span class="branch-1 cbranch-no" title="branch not covered" >,</span>
   ) {}
 &nbsp;
   /**
@@ -1690,7 +1690,7 @@ export class <span class="cstat-no" title="statement not covered" ><span class="
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-17T23:10:55.482Z
+                at 2025-09-18T04:51:59.517Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

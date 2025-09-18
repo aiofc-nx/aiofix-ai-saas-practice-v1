@@ -396,4 +396,173 @@ describe('元数据工具函数', () => {
       await expect(Promise.all(promises)).resolves.not.toThrow();
     });
   });
+
+  describe('元数据操作增强测试', () => {
+    describe('复杂元数据场景', () => {
+      it('应该处理多重装饰器的元数据冲突', () => {
+        class MultiDecoratorClass {}
+
+        // 设置多个不同类型的元数据
+        setCommandHandlerMetadata(MultiDecoratorClass, 'TestCommand', {
+          priority: 1,
+        });
+        setQueryHandlerMetadata(MultiDecoratorClass, 'TestQuery', {
+          priority: 2,
+        });
+        setEventHandlerMetadata(MultiDecoratorClass, 'TestEvent', {
+          priority: 3,
+        });
+        setSagaMetadata(MultiDecoratorClass, 'TestSaga', { priority: 4 });
+
+        // 验证每种类型的元数据都能正确获取
+        expect(getCommandHandlerMetadata(MultiDecoratorClass)?.priority).toBe(
+          1,
+        );
+        expect(getQueryHandlerMetadata(MultiDecoratorClass)?.priority).toBe(2);
+        expect(getEventHandlerMetadata(MultiDecoratorClass)?.priority).toBe(3);
+        expect(getSagaMetadata(MultiDecoratorClass)?.priority).toBe(4);
+
+        // 验证处理器类型检查
+        expect(isCommandHandler(MultiDecoratorClass)).toBe(true);
+        expect(isQueryHandler(MultiDecoratorClass)).toBe(true);
+        expect(isEventHandler(MultiDecoratorClass)).toBe(true);
+        expect(isSaga(MultiDecoratorClass)).toBe(true);
+      });
+
+      it('应该处理元数据的动态更新', () => {
+        class DynamicClass {}
+
+        // 初始设置
+        setCommandHandlerMetadata(DynamicClass, 'InitialCommand', {
+          priority: 1,
+        });
+        expect(getCommandHandlerMetadata(DynamicClass)?.commandType).toBe(
+          'InitialCommand',
+        );
+
+        // 动态更新
+        setCommandHandlerMetadata(DynamicClass, 'UpdatedCommand', {
+          priority: 5,
+        });
+        expect(getCommandHandlerMetadata(DynamicClass)?.commandType).toBe(
+          'UpdatedCommand',
+        );
+        expect(getCommandHandlerMetadata(DynamicClass)?.priority).toBe(5);
+      });
+
+      it('应该处理元数据的批量操作', () => {
+        const classes = Array.from({ length: 50 }, () => class {});
+
+        // 批量设置元数据
+        classes.forEach((cls, index) => {
+          setCommandHandlerMetadata(cls, `BatchCommand${index}`, {
+            priority: index,
+            timeout: index * 1000,
+          });
+        });
+
+        // 批量验证元数据
+        classes.forEach((cls, index) => {
+          const metadata = getCommandHandlerMetadata(cls);
+          expect(metadata?.commandType).toBe(`BatchCommand${index}`);
+          expect(metadata?.priority).toBe(index);
+          expect(metadata?.timeout).toBe(index * 1000);
+        });
+      });
+    });
+
+    describe('元数据查询和统计', () => {
+      it('应该统计不同类型处理器的数量', () => {
+        class StatsClass {}
+
+        setCommandHandlerMetadata(StatsClass, 'Cmd1');
+        setQueryHandlerMetadata(StatsClass, 'Query1');
+        setEventHandlerMetadata(StatsClass, 'Event1');
+        setSagaMetadata(StatsClass, 'Saga1');
+
+        const allMetadata = getAllHandlerMetadata(StatsClass);
+        expect(allMetadata).toHaveLength(4);
+
+        // 检查各种处理器类型
+        expect(isCommandHandler(StatsClass)).toBe(true);
+        expect(isQueryHandler(StatsClass)).toBe(true);
+        expect(isEventHandler(StatsClass)).toBe(true);
+        expect(isSaga(StatsClass)).toBe(true);
+      });
+
+      it('应该生成基本的元数据摘要', () => {
+        class ReportClass {}
+
+        setCommandHandlerMetadata(ReportClass, 'ReportCommand', {
+          priority: 10,
+          timeout: 5000,
+        });
+
+        const metadata = getCommandHandlerMetadata(ReportClass)!;
+        const summary = getMetadataSummary(metadata);
+        expect(summary).toBeDefined();
+        expect(summary.decoratorType).toBe(DecoratorType.COMMAND_HANDLER);
+        expect(summary.version).toBeDefined();
+        expect(summary.createdAt).toBeInstanceOf(Date);
+        expect(summary.enabled).toBe(true);
+      });
+    });
+
+    describe('元数据清理和维护', () => {
+      it('应该能够清理所有元数据', () => {
+        class CleanupClass {}
+
+        // 设置多种元数据
+        setCommandHandlerMetadata(CleanupClass, 'TestCommand');
+        setQueryHandlerMetadata(CleanupClass, 'TestQuery');
+        setEventHandlerMetadata(CleanupClass, 'TestEvent');
+
+        // 验证元数据存在
+        expect(isCommandHandler(CleanupClass)).toBe(true);
+        expect(isQueryHandler(CleanupClass)).toBe(true);
+        expect(isEventHandler(CleanupClass)).toBe(true);
+
+        // 获取所有元数据键并删除
+        const keys = getMetadataKeys(CleanupClass);
+        keys.forEach((key) => {
+          deleteMetadata(CleanupClass, key);
+        });
+
+        // 验证元数据已删除
+        expect(isCommandHandler(CleanupClass)).toBe(false);
+        expect(isQueryHandler(CleanupClass)).toBe(false);
+        expect(isEventHandler(CleanupClass)).toBe(false);
+      });
+
+      it('应该处理元数据的内存管理', () => {
+        const classes: any[] = [];
+
+        // 创建大量带有元数据的类
+        for (let i = 0; i < 100; i++) {
+          const cls = class {};
+          setCommandHandlerMetadata(cls, `Command${i}`, {
+            priority: i,
+          });
+          classes.push(cls);
+        }
+
+        // 验证元数据正确设置
+        classes.forEach((cls, index) => {
+          const metadata = getCommandHandlerMetadata(cls);
+          expect(metadata?.commandType).toBe(`Command${index}`);
+          expect(metadata?.priority).toBe(index);
+        });
+
+        // 清理元数据
+        classes.forEach((cls) => {
+          deleteMetadata(cls, 'aiofix:command-handler');
+        });
+
+        // 验证清理成功
+        classes.forEach((cls) => {
+          expect(hasMetadata(cls, 'aiofix:command-handler')).toBe(false);
+        });
+      });
+    });
+  });
 });

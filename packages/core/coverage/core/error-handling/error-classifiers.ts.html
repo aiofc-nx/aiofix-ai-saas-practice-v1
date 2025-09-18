@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">10.24% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/205</span>
+                <span class='fraction'>21/205</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">4.66% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/193</span>
+                <span class='fraction'>9/193</span>
             </div>
         
             
@@ -722,10 +722,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -737,7 +737,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -844,9 +844,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -945,7 +945,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1048,9 +1048,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1160,9 +1160,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1264,7 +1264,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1372,10 +1372,10 @@
  * @description 错误分类器实现
  * @since 1.0.0
  */
-<span class="cstat-no" title="statement not covered" >import { Injectable } from '@nestjs/common';</span>
+import { Injectable } from '@nestjs/common';
 import type { ILoggerService } from '@aiofix/logging';
-<span class="cstat-no" title="statement not covered" >import { LogContext } from '@aiofix/logging';</span>
-<span class="cstat-no" title="statement not covered" >import {</span>
+import { LogContext } from '@aiofix/logging';
+import {
   IErrorClassifier,
   IErrorClassification,
   IErrorContext,
@@ -1387,7 +1387,7 @@ import type { ILoggerService } from '@aiofix/logging';
  * 业务错误分类器
  */
 @Injectable()
-export <span class="cstat-no" title="statement not covered" >class <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >BusinessErrorClassifier </span>implements IErrorClassifier {</span></span>
+export class BusinessErrorClassifier implements IErrorClassifier {
   public readonly name = <span class="cstat-no" title="statement not covered" >'BusinessErrorClassifier';</span>
   public readonly priority = <span class="cstat-no" title="statement not covered" >100;</span>
 &nbsp;
@@ -1494,7 +1494,7 @@ export <span class="cstat-no" title="statement not covered" >class <span class="
  * 验证错误分类器
  */
 @Injectable()
-export <span class="cstat-no" title="statement not covered" >class <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >ValidationErrorClassifier </span>implements IErrorClassifier {</span></span>
+export class ValidationErrorClassifier implements IErrorClassifier {
   public readonly name = <span class="cstat-no" title="statement not covered" >'ValidationErrorClassifier';</span>
   public readonly priority = <span class="cstat-no" title="statement not covered" >90;</span>
 &nbsp;
@@ -1595,7 +1595,7 @@ export <span class="cstat-no" title="statement not covered" >class <span class="
  * 认证错误分类器
  */
 @Injectable()
-export <span class="cstat-no" title="statement not covered" >class <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >AuthenticationErrorClassifier </span>implements IErrorClassifier {</span></span>
+export class AuthenticationErrorClassifier implements IErrorClassifier {
   public readonly name = <span class="cstat-no" title="statement not covered" >'AuthenticationErrorClassifier';</span>
   public readonly priority = <span class="cstat-no" title="statement not covered" >80;</span>
 &nbsp;
@@ -1698,7 +1698,7 @@ export <span class="cstat-no" title="statement not covered" >class <span class="
  * 数据访问错误分类器
  */
 @Injectable()
-export <span class="cstat-no" title="statement not covered" >class <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >DataAccessErrorClassifier </span>implements IErrorClassifier {</span></span>
+export class DataAccessErrorClassifier implements IErrorClassifier {
   public readonly name = <span class="cstat-no" title="statement not covered" >'DataAccessErrorClassifier';</span>
   public readonly priority = <span class="cstat-no" title="statement not covered" >70;</span>
 &nbsp;
@@ -1810,7 +1810,7 @@ export <span class="cstat-no" title="statement not covered" >class <span class="
  * 网络错误分类器
  */
 @Injectable()
-export <span class="cstat-no" title="statement not covered" >class <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >NetworkErrorClassifier </span>implements IErrorClassifier {</span></span>
+export class NetworkErrorClassifier implements IErrorClassifier {
   public readonly name = <span class="cstat-no" title="statement not covered" >'NetworkErrorClassifier';</span>
   public readonly priority = <span class="cstat-no" title="statement not covered" >60;</span>
 &nbsp;
@@ -1914,7 +1914,7 @@ export <span class="cstat-no" title="statement not covered" >class <span class="
  * 系统错误分类器
  */
 @Injectable()
-export <span class="cstat-no" title="statement not covered" >class <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >SystemErrorClassifier </span>implements IErrorClassifier {</span></span>
+export class SystemErrorClassifier implements IErrorClassifier {
   public readonly name = <span class="cstat-no" title="statement not covered" >'SystemErrorClassifier';</span>
   public readonly priority = <span class="cstat-no" title="statement not covered" >50;</span>
 &nbsp;
@@ -2020,7 +2020,7 @@ export <span class="cstat-no" title="statement not covered" >class <span class="
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-17T23:10:55.482Z
+                at 2025-09-18T04:51:59.517Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

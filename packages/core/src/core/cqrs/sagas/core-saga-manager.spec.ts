@@ -186,5 +186,115 @@ describe('CoreSagaManager', () => {
       const status = sagaManager.getSagaStatus('invalid-id');
       expect(status).toBeUndefined();
     });
+
+    it('应该处理停止不存在的 Saga', async () => {
+      const result = await sagaManager
+        .stopSaga('non-existent-saga')
+        .toPromise();
+      expect(result).toBe(false);
+    });
+
+    it('应该处理取消不存在的 Saga', async () => {
+      const result = await sagaManager
+        .cancelSaga('non-existent-saga')
+        .toPromise();
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('边界情况', () => {
+    beforeEach(async () => {
+      await sagaManager.start();
+    });
+
+    it('应该处理空的 Saga 数据', async () => {
+      sagaManager.registerSaga(testSaga);
+
+      const context = await sagaManager.startSaga('TestSaga', {}).toPromise();
+
+      expect(context).toBeDefined();
+      expect(context!.data).toBeDefined();
+    });
+
+    it('应该处理基本的 Saga 注册', () => {
+      const initialCount = sagaManager.getAllSagas().length;
+      sagaManager.registerSaga(testSaga);
+      expect(sagaManager.getAllSagas().length).toBeGreaterThan(initialCount);
+    });
+
+    it('应该处理复杂的 Saga 数据结构', async () => {
+      sagaManager.registerSaga(testSaga);
+
+      const complexData = {
+        nested: {
+          array: [1, 2, 3],
+          object: { key: 'value' },
+          null: null,
+          undefined: undefined,
+        },
+        date: new Date(),
+        string: 'test string',
+      };
+
+      const context = await sagaManager
+        .startSaga('TestSaga', complexData)
+        .toPromise();
+
+      expect(context!.data).toEqual(complexData);
+    });
+  });
+
+  describe('生命周期管理', () => {
+    it('应该正确处理管理器重启', async () => {
+      await sagaManager.start();
+      sagaManager.registerSaga(testSaga);
+
+      await sagaManager.stop();
+      await sagaManager.start();
+
+      // Saga 注册应该被保持
+      expect(sagaManager.getSaga('TestSaga')).toBeDefined();
+    });
+
+    it('应该在停止时清理资源', async () => {
+      await sagaManager.start();
+      sagaManager.registerSaga(testSaga);
+
+      await sagaManager.startSaga('TestSaga', {}).toPromise();
+
+      await sagaManager.stop();
+
+      const health = await sagaManager.healthCheck();
+      expect(health).toBe(false);
+    });
+
+    it('应该处理多次启动调用', async () => {
+      await sagaManager.start();
+      await sagaManager.start(); // 第二次调用应该安全
+
+      expect(sagaManager.isStarted()).toBe(true);
+    });
+
+    it('应该处理多次停止调用', async () => {
+      await sagaManager.start();
+
+      await sagaManager.stop();
+      await sagaManager.stop(); // 第二次调用应该安全
+
+      expect(sagaManager.isStarted()).toBe(false);
+    });
+  });
+
+  describe('健康检查', () => {
+    it('应该在管理器未启动时返回不健康', async () => {
+      const health = await sagaManager.healthCheck();
+      expect(health).toBe(false);
+    });
+
+    it('应该在管理器启动后返回健康', async () => {
+      await sagaManager.start();
+      const health = await sagaManager.healthCheck();
+      expect(health).toBe(true);
+    });
   });
 });

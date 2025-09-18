@@ -312,5 +312,139 @@ describe('BusinessErrors', () => {
         "Operation 'Test operation' timed out after 0ms",
       );
     });
+
+    it('应该处理极大数值', () => {
+      const error = new QuotaExceededError(
+        'STORAGE',
+        Number.MAX_SAFE_INTEGER,
+        Number.MAX_VALUE,
+      );
+      expect(error.message).toContain(Number.MAX_SAFE_INTEGER.toString());
+    });
+
+    it('应该处理负数参数', () => {
+      const error = new QuotaExceededError('API_CALLS', -10, 100);
+      expect(error.message).toBe('Quota exceeded for API_CALLS: -10/100');
+    });
+
+    it('应该处理Unicode字符', () => {
+      const error = new EntityNotFoundError('用户', '用户-123');
+      expect(error.message).toBe("用户 with ID '用户-123' not found");
+    });
+
+    it('应该处理换行符和制表符', () => {
+      const error = new BusinessRuleViolationError(
+        'Rule\nwith\ttabs',
+        'Test rule',
+      );
+      expect(error.message).toBe('Business rule violation: Rule\nwith\ttabs');
+    });
+
+    it('应该处理简单的操作名称', () => {
+      const error = new OperationNotAllowedError('delete', 'User');
+      expect(error.message).toBe("Operation 'delete' is not allowed on User");
+    });
+
+    it('应该处理大型对象的错误创建', () => {
+      const largeData = {
+        users: new Array(1000)
+          .fill(0)
+          .map((_, i) => ({ id: i, name: `User${i}` })),
+        metadata: { version: '1.0.0', timestamp: new Date() },
+      };
+
+      expect(() => {
+        new EntityNotFoundError('User', 'user-123', { customData: largeData });
+      }).not.toThrow();
+    });
+  });
+
+  describe('错误类型验证', () => {
+    it('应该正确设置错误类型', () => {
+      const errors = [
+        new EntityNotFoundError('User', 'user-123'),
+        new EntityAlreadyExistsError('User', 'user-123'),
+        new BusinessRuleViolationError('Test rule', 'Test rule name'),
+        new OperationNotAllowedError('delete', 'User'),
+        new InsufficientPermissionsError('read', ['read', 'write']),
+        new QuotaExceededError('API_CALLS', 100, 50),
+        new OperationTimeoutError('Test operation', 5000),
+        new ConcurrentModificationError('Resource', 'resource-123', 1, 2),
+      ];
+
+      errors.forEach((error) => {
+        expect(error.name).toBeDefined();
+        expect(error.message).toBeDefined();
+        expect(error.code).toBeDefined();
+        expect(error.severity).toBeDefined();
+      });
+    });
+
+    it('应该正确处理错误的基本属性', () => {
+      const error = new EntityNotFoundError('User', 'user-123');
+
+      expect(typeof error.isRecoverable()).toBe('boolean');
+      expect(typeof error.isRetryable()).toBe('boolean');
+      expect(typeof error.isLoggable()).toBe('boolean');
+      expect(typeof error.isAlertable()).toBe('boolean');
+      expect(typeof error.isMonitorable()).toBe('boolean');
+    });
+
+    it('应该支持错误的字符串表示', () => {
+      const error = new EntityNotFoundError('User', 'user-123');
+      const str = error.toString();
+
+      expect(typeof str).toBe('string');
+      expect(str).toContain('EntityNotFoundError');
+      expect(str).toContain('user-123');
+    });
+
+    it('应该支持错误的JSON序列化', () => {
+      const error = new EntityNotFoundError('User', 'user-123');
+      const json = error.toJSON();
+
+      expect(typeof json).toBe('object');
+      expect(json).toBeDefined();
+    });
+  });
+
+  describe('性能和压力测试', () => {
+    it('应该能够快速创建大量错误', () => {
+      const startTime = Date.now();
+
+      for (let i = 0; i < 1000; i++) {
+        new EntityNotFoundError('User', `user-${i}`, {});
+      }
+
+      const endTime = Date.now();
+      expect(endTime - startTime).toBeLessThan(1000); // 应该在1秒内完成
+    });
+
+    it('应该支持错误的批量处理', () => {
+      const errors: EntityNotFoundError[] = [];
+      for (let i = 0; i < 100; i++) {
+        errors.push(new EntityNotFoundError('User', `user-${i}`, {}));
+      }
+
+      expect(errors).toHaveLength(100);
+      errors.forEach((error, index) => {
+        expect(error.message).toContain(`user-${index}`);
+      });
+    });
+
+    it('应该能够处理并发错误创建', async () => {
+      const promises: Array<Promise<void>> = [];
+      for (let i = 0; i < 50; i++) {
+        promises.push(
+          new Promise<void>((resolve) => {
+            new EntityNotFoundError('User', `user-${i}`, {});
+            resolve();
+          }),
+        );
+      }
+
+      await Promise.all(promises);
+      expect(promises).toHaveLength(50);
+    });
   });
 });

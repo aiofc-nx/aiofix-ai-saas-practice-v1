@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">7.5% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/160</span>
+                <span class='fraction'>12/160</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">3.94% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/152</span>
+                <span class='fraction'>6/152</span>
             </div>
         
             
@@ -781,10 +781,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -796,9 +796,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -982,9 +982,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1246,7 +1246,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1490,10 +1490,10 @@
  * @description 错误恢复器实现
  * @since 1.0.0
  */
-<span class="cstat-no" title="statement not covered" >import { Injectable } from '@nestjs/common';</span>
+import { Injectable } from '@nestjs/common';
 import type { ILoggerService } from '@aiofix/logging';
-<span class="cstat-no" title="statement not covered" >import { LogContext } from '@aiofix/logging';</span>
-<span class="cstat-no" title="statement not covered" >import {</span>
+import { LogContext } from '@aiofix/logging';
+import {
   IErrorRecovery,
   IErrorInfo,
   IErrorProcessingStep,
@@ -1505,7 +1505,7 @@ import type { ILoggerService } from '@aiofix/logging';
  * 重试错误恢复器
  */
 @Injectable()
-export <span class="cstat-no" title="statement not covered" >class <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >RetryErrorRecovery </span>implements IErrorRecovery {</span></span>
+export class RetryErrorRecovery implements IErrorRecovery {
   public readonly name = <span class="cstat-no" title="statement not covered" >'RetryErrorRecovery';</span>
   public readonly priority = <span class="cstat-no" title="statement not covered" >100;</span>
 &nbsp;
@@ -1691,7 +1691,7 @@ export <span class="cstat-no" title="statement not covered" >class <span class="
  * 回退错误恢复器
  */
 @Injectable()
-export <span class="cstat-no" title="statement not covered" >class <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >FallbackErrorRecovery </span>implements IErrorRecovery {</span></span>
+export class FallbackErrorRecovery implements IErrorRecovery {
   public readonly name = <span class="cstat-no" title="statement not covered" >'FallbackErrorRecovery';</span>
   public readonly priority = <span class="cstat-no" title="statement not covered" >90;</span>
 &nbsp;
@@ -1955,7 +1955,7 @@ export <span class="cstat-no" title="statement not covered" >class <span class="
  * 降级错误恢复器
  */
 @Injectable()
-export <span class="cstat-no" title="statement not covered" >class <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >DegradationErrorRecovery </span>implements IErrorRecovery {</span></span>
+export class DegradationErrorRecovery implements IErrorRecovery {
   public readonly name = <span class="cstat-no" title="statement not covered" >'DegradationErrorRecovery';</span>
   public readonly priority = <span class="cstat-no" title="statement not covered" >80;</span>
 &nbsp;
@@ -2197,7 +2197,7 @@ export <span class="cstat-no" title="statement not covered" >class <span class="
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-17T23:10:54.909Z
+                at 2025-09-18T04:51:58.799Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">12.5% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/96</span>
+                <span class='fraction'>12/96</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">6.66% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/90</span>
+                <span class='fraction'>6/90</span>
             </div>
         
             
@@ -696,10 +696,10 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -710,9 +710,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -920,9 +920,9 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1160,7 +1160,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1320,10 +1320,10 @@
  * @description 错误通知器实现
  * @since 1.0.0
  */
-<span class="cstat-no" title="statement not covered" >import { Injectable } from '@nestjs/common';</span>
+import { Injectable } from '@nestjs/common';
 import type { ILoggerService } from '@aiofix/logging';
-<span class="cstat-no" title="statement not covered" >import { LogContext } from '@aiofix/logging';</span>
-<span class="cstat-no" title="statement not covered" >import {</span>
+import { LogContext } from '@aiofix/logging';
+import {
   IErrorNotifier,
   IErrorInfo,
   IErrorProcessingStep,
@@ -1334,7 +1334,7 @@ import type { ILoggerService } from '@aiofix/logging';
  * 邮件错误通知器
  */
 @Injectable()
-export <span class="cstat-no" title="statement not covered" >class <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >EmailErrorNotifier </span>implements IErrorNotifier {</span></span>
+export class EmailErrorNotifier implements IErrorNotifier {
   public readonly name = <span class="cstat-no" title="statement not covered" >'EmailErrorNotifier';</span>
   public readonly priority = <span class="cstat-no" title="statement not covered" >100;</span>
 &nbsp;
@@ -1544,7 +1544,7 @@ Please investigate and take appropriate action.
  * Slack错误通知器
  */
 @Injectable()
-export <span class="cstat-no" title="statement not covered" >class <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >SlackErrorNotifier </span>implements IErrorNotifier {</span></span>
+export class SlackErrorNotifier implements IErrorNotifier {
   public readonly name = <span class="cstat-no" title="statement not covered" >'SlackErrorNotifier';</span>
   public readonly priority = <span class="cstat-no" title="statement not covered" >90;</span>
 &nbsp;
@@ -1784,7 +1784,7 @@ export <span class="cstat-no" title="statement not covered" >class <span class="
  * Webhook错误通知器
  */
 @Injectable()
-export <span class="cstat-no" title="statement not covered" >class <span class="cstat-no" title="statement not covered" ><span class="cstat-no" title="statement not covered" >WebhookErrorNotifier </span>implements IErrorNotifier {</span></span>
+export class WebhookErrorNotifier implements IErrorNotifier {
   public readonly name = <span class="cstat-no" title="statement not covered" >'WebhookErrorNotifier';</span>
   public readonly priority = <span class="cstat-no" title="statement not covered" >80;</span>
 &nbsp;
@@ -1942,7 +1942,7 @@ export <span class="cstat-no" title="statement not covered" >class <span class="
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-09-17T23:10:55.482Z
+                at 2025-09-18T04:51:59.517Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

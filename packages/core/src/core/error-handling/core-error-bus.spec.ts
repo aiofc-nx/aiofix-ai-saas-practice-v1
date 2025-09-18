@@ -460,5 +460,245 @@ describe('CoreErrorBus', () => {
       const stats = errorBus.getStatistics();
       expect(stats.totalErrors).toBe(100);
     });
+
+    it('应该处理循环引用的错误上下文', async () => {
+      await errorBus.start();
+      const circularContext: any = { name: 'test' };
+      circularContext.self = circularContext;
+
+      const error = new Error('Circular context error');
+      const errorInfo = await errorBus.publish(error, circularContext);
+      expect(errorInfo).toBeDefined();
+    });
+
+    it('应该处理null和undefined的错误上下文', async () => {
+      await errorBus.start();
+      const error = new Error('Null context error');
+
+      const errorInfo1 = await errorBus.publish(error, null as any);
+      expect(errorInfo1).toBeDefined();
+
+      const errorInfo2 = await errorBus.publish(error, undefined as any);
+      expect(errorInfo2).toBeDefined();
+    });
+
+    it('应该处理深度嵌套的错误上下文', async () => {
+      await errorBus.start();
+      const deepContext: Partial<IErrorContext> = {
+        tenantId: 'tenant-123',
+        customData: {
+          level1: {
+            level2: {
+              level3: {
+                level4: {
+                  level5: 'deep value',
+                  array: [1, 2, 3, { nested: 'value' }],
+                },
+              },
+            },
+          },
+        },
+      };
+
+      const error = new Error('Deep context error');
+      const errorInfo = await errorBus.publish(error, deepContext);
+      expect(errorInfo).toBeDefined();
+    });
+
+    it('应该处理非常长的错误消息', async () => {
+      await errorBus.start();
+      const longMessage = 'A'.repeat(10000);
+      const error = new Error(longMessage);
+
+      const errorInfo = await errorBus.publish(error);
+      expect(errorInfo.originalError.message).toBe(longMessage);
+    });
+
+    it('应该处理包含换行符的错误消息', async () => {
+      await errorBus.start();
+      const multilineMessage = 'Line 1\nLine 2\nLine 3\r\nLine 4';
+      const error = new Error(multilineMessage);
+
+      const errorInfo = await errorBus.publish(error);
+      expect(errorInfo.originalError.message).toBe(multilineMessage);
+    });
+
+    it('应该处理包含特殊JSON字符的错误消息', async () => {
+      await errorBus.start();
+      const jsonMessage =
+        '{"key": "value", "array": [1,2,3], "nested": {"prop": "test"}}';
+      const error = new Error(jsonMessage);
+
+      const errorInfo = await errorBus.publish(error);
+      expect(errorInfo.originalError.message).toBe(jsonMessage);
+    });
+
+    it('应该处理包含转义字符的错误消息', async () => {
+      await errorBus.start();
+      const escapedMessage =
+        'Error with \\n\\t\\r\\"quotes\\" and \\backslashes\\';
+      const error = new Error(escapedMessage);
+
+      const errorInfo = await errorBus.publish(error);
+      expect(errorInfo.originalError.message).toBe(escapedMessage);
+    });
+
+    it('应该处理不同类型的错误对象', async () => {
+      await errorBus.start();
+
+      // 测试自定义错误类型
+      class CustomError extends Error {
+        constructor(
+          message: string,
+          public code: string,
+        ) {
+          super(message);
+          this.name = 'CustomError';
+        }
+      }
+
+      const customError = new CustomError('Custom error message', 'CUSTOM_001');
+      const errorInfo = await errorBus.publish(customError);
+      expect(errorInfo.originalError).toBeInstanceOf(CustomError);
+      expect((errorInfo.originalError as CustomError).code).toBe('CUSTOM_001');
+    });
+
+    it('应该处理错误对象的额外属性', async () => {
+      await errorBus.start();
+      const error = new Error('Error with extra properties') as any;
+      error.code = 'ERR_001';
+      error.statusCode = 500;
+      error.details = { reason: 'Server failure', timestamp: new Date() };
+
+      const errorInfo = await errorBus.publish(error);
+      expect(errorInfo.originalError).toBe(error);
+    });
+
+    it('应该处理并发错误发布', async () => {
+      await errorBus.start();
+
+      const concurrentPromises = Array.from({ length: 50 }, (_, i) =>
+        errorBus.publish(new Error(`Concurrent error ${i}`)),
+      );
+
+      const results = await Promise.all(concurrentPromises);
+      expect(results).toHaveLength(50);
+
+      const stats = errorBus.getStatistics();
+      expect(stats.totalErrors).toBeGreaterThanOrEqual(50);
+    });
+  });
+
+  describe('高级功能测试', () => {
+    beforeEach(async () => {
+      await errorBus.start();
+    });
+
+    it('应该支持错误链追踪', async () => {
+      const rootError = new Error('Root cause');
+      const middleError = new Error('Middle error');
+      const topError = new Error('Top level error');
+
+      // 创建错误链
+      (middleError as any).cause = rootError;
+      (topError as any).cause = middleError;
+
+      const errorInfo = await errorBus.publish(topError);
+      expect(errorInfo.originalError).toBe(topError);
+    });
+
+    it('应该处理错误分类和优先级', async () => {
+      const highPriorityError = new Error('Critical system failure');
+      highPriorityError.name = 'CriticalError';
+
+      const lowPriorityError = new Error('Minor validation issue');
+      lowPriorityError.name = 'ValidationError';
+
+      const errorInfo1 = await errorBus.publish(highPriorityError);
+      const errorInfo2 = await errorBus.publish(lowPriorityError);
+
+      expect(errorInfo1).toBeDefined();
+      expect(errorInfo2).toBeDefined();
+    });
+
+    it('应该处理错误恢复策略', async () => {
+      const recoverableError = new Error('Temporary network issue');
+      recoverableError.name = 'NetworkError';
+
+      const errorInfo = await errorBus.publish(recoverableError, {
+        tenantId: 'tenant-123',
+        customData: {
+          retryable: true,
+          maxRetries: 3,
+        },
+      });
+
+      expect(errorInfo.status).toBe('PENDING');
+    });
+
+    it('应该支持错误通知配置', async () => {
+      const notifiableError = new Error('User notification required');
+      notifiableError.name = 'UserError';
+
+      const errorInfo = await errorBus.publish(notifiableError, {
+        tenantId: 'tenant-123',
+        userId: 'user-456',
+        customData: {
+          notificationRequired: true,
+        },
+      });
+
+      expect(errorInfo).toBeDefined();
+    });
+
+    it('应该处理错误聚合和批处理', async () => {
+      const errors = [
+        new Error('Batch error 1'),
+        new Error('Batch error 2'),
+        new Error('Batch error 3'),
+      ];
+
+      const promises = errors.map((error) => errorBus.publish(error));
+      const results = await Promise.all(promises);
+
+      expect(results).toHaveLength(3);
+      results.forEach((result) => {
+        expect(result.status).toBe('PENDING');
+      });
+    });
+  });
+
+  describe('性能和压力测试', () => {
+    beforeEach(async () => {
+      await errorBus.start();
+    });
+
+    it('应该在高负载下保持性能', async () => {
+      const startTime = Date.now();
+
+      const promises = Array.from({ length: 1000 }, (_, i) =>
+        errorBus.publish(new Error(`Performance test error ${i}`)),
+      );
+
+      await Promise.all(promises);
+
+      const endTime = Date.now();
+      const duration = endTime - startTime;
+
+      // 1000个错误应该在合理时间内处理完成（比如5秒内）
+      expect(duration).toBeLessThan(5000);
+    });
+
+    it('应该正确处理内存使用', async () => {
+      // 发布大量错误后检查统计信息
+      const promises = Array.from({ length: 500 }, (_, i) =>
+        errorBus.publish(new Error(`Memory test error ${i}`)),
+      );
+
+      await Promise.all(promises);
+
+      const stats = errorBus.getStatistics();
+      expect(stats.totalErrors).toBe(500);
+    });
   });
 });

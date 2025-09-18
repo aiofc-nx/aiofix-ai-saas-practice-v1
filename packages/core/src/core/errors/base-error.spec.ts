@@ -686,4 +686,196 @@ describe('NetworkError', () => {
     expect(error.category).toBe(ErrorCategory.NETWORK);
     expect(error.severity).toBe(ErrorSeverity.MEDIUM);
   });
+
+  describe('错误处理增强测试', () => {
+    it('应该处理包含特殊字符的错误消息', () => {
+      const specialMessage =
+        'Error with special chars: !@#$%^&*()_+-=[]{}|;:,.<>?';
+      const error = new TestError(
+        specialMessage,
+        CommonErrorCodes.BIZ_ENTITY_NOT_FOUND,
+      );
+
+      expect(error.message).toBe(specialMessage);
+      expect(error.toString()).toContain(specialMessage);
+    });
+
+    it('应该处理包含换行符的错误消息', () => {
+      const multilineMessage = 'Line 1\nLine 2\nLine 3\tTabbed content';
+      const error = new TestError(
+        multilineMessage,
+        CommonErrorCodes.BIZ_ENTITY_NOT_FOUND,
+      );
+
+      expect(error.message).toBe(multilineMessage);
+      expect(error.toString()).toContain('Line 1');
+      expect(error.toString()).toContain('Line 2');
+    });
+
+    it('应该处理Unicode字符的错误消息', () => {
+      const unicodeMessage = '错误消息 🚨 エラー عطل 🔥';
+      const error = new TestError(
+        unicodeMessage,
+        CommonErrorCodes.BIZ_ENTITY_NOT_FOUND,
+      );
+
+      expect(error.message).toBe(unicodeMessage);
+      expect(error.toString()).toContain('🚨');
+    });
+
+    it('应该处理极长的错误消息', () => {
+      const longMessage = 'A'.repeat(10000);
+      const error = new TestError(
+        longMessage,
+        CommonErrorCodes.BIZ_ENTITY_NOT_FOUND,
+      );
+
+      expect(error.message).toBe(longMessage);
+      expect(error.message.length).toBe(10000);
+    });
+
+    it('应该处理空字符串和空白字符的错误消息', () => {
+      const errors = [
+        new TestError('', CommonErrorCodes.BIZ_ENTITY_NOT_FOUND),
+        new TestError('   ', CommonErrorCodes.BIZ_ENTITY_NOT_FOUND),
+        new TestError('\t\n\r', CommonErrorCodes.BIZ_ENTITY_NOT_FOUND),
+      ];
+
+      errors.forEach((error) => {
+        expect(error.message).toBeDefined();
+        expect(typeof error.message).toBe('string');
+      });
+    });
+
+    it('应该处理数字和布尔值的错误代码', () => {
+      const error1 = new TestError('Test', 12345 as any);
+      const error2 = new TestError('Test', true as any);
+
+      expect(error1.code).toBe(12345);
+      expect(error2.code).toBe(true);
+    });
+  });
+
+  describe('错误性能测试', () => {
+    it('应该快速创建大量错误', () => {
+      const startTime = Date.now();
+
+      for (let i = 0; i < 5000; i++) {
+        new TestError(
+          `Error ${i}`,
+          CommonErrorCodes.BIZ_ENTITY_NOT_FOUND,
+          ErrorCategory.BUSINESS,
+          ErrorSeverity.LOW,
+        );
+      }
+
+      const endTime = Date.now();
+      expect(endTime - startTime).toBeLessThan(3000); // 应该在3秒内完成
+    });
+
+    it('应该支持错误的批量处理', () => {
+      const errors: TestError[] = [];
+      for (let i = 0; i < 1000; i++) {
+        errors.push(
+          new TestError(
+            `Batch error ${i}`,
+            CommonErrorCodes.BIZ_ENTITY_NOT_FOUND,
+          ),
+        );
+      }
+
+      expect(errors).toHaveLength(1000);
+      errors.forEach((error, index) => {
+        expect(error.message).toContain(`Batch error ${index}`);
+      });
+    });
+
+    it('应该高效处理错误序列化', () => {
+      const error = new TestError(
+        'Serialization test',
+        CommonErrorCodes.BIZ_ENTITY_NOT_FOUND,
+        ErrorCategory.BUSINESS,
+        ErrorSeverity.MEDIUM,
+        testMetadata,
+        testContext,
+      );
+
+      const startTime = Date.now();
+      for (let i = 0; i < 1000; i++) {
+        error.toJSON();
+        error.toString();
+      }
+      const endTime = Date.now();
+
+      expect(endTime - startTime).toBeLessThan(1000); // 应该在1秒内完成
+    });
+  });
+
+  describe('错误边界和极值测试', () => {
+    it('应该处理所有错误严重性级别', () => {
+      const severities = [
+        ErrorSeverity.LOW,
+        ErrorSeverity.MEDIUM,
+        ErrorSeverity.HIGH,
+        ErrorSeverity.CRITICAL,
+      ];
+
+      severities.forEach((severity) => {
+        const error = new TestError(
+          'Test error',
+          CommonErrorCodes.BIZ_ENTITY_NOT_FOUND,
+          ErrorCategory.BUSINESS,
+          severity,
+        );
+        expect(error.severity).toBe(severity);
+      });
+    });
+
+    it('应该处理所有错误类别', () => {
+      const categories = [
+        ErrorCategory.BUSINESS,
+        ErrorCategory.SYSTEM,
+        ErrorCategory.VALIDATION,
+        ErrorCategory.AUTHORIZATION,
+        ErrorCategory.NETWORK,
+      ];
+
+      categories.forEach((category) => {
+        const error = new TestError(
+          'Test error',
+          CommonErrorCodes.BIZ_ENTITY_NOT_FOUND,
+          category,
+        );
+        expect(error.category).toBe(category);
+      });
+    });
+
+    it('应该处理错误的基本验证', () => {
+      const error = new TestError(
+        'Validation test',
+        CommonErrorCodes.BIZ_ENTITY_NOT_FOUND,
+      );
+
+      expect(typeof error.isRecoverable()).toBe('boolean');
+      expect(typeof error.isRetryable()).toBe('boolean');
+      expect(typeof error.isLoggable()).toBe('boolean');
+      expect(typeof error.isAlertable()).toBe('boolean');
+      expect(typeof error.isMonitorable()).toBe('boolean');
+    });
+
+    it('应该支持错误的基本属性访问', () => {
+      const error1 = new TestError(
+        'Test',
+        CommonErrorCodes.BIZ_ENTITY_NOT_FOUND,
+      );
+      const error2 = new TestError(
+        'Test',
+        CommonErrorCodes.BIZ_ENTITY_NOT_FOUND,
+      );
+
+      expect(error1.name).toBe('TestError');
+      expect(error1.code).toBe(error2.code);
+      expect(error1.category).toBe(error2.category);
+    });
+  });
 });

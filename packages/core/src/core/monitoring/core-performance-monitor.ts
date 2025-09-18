@@ -380,7 +380,7 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
    */
   public async queryMetrics(
     options: IPerformanceMetricsQueryOptions,
-  ): Promise<{ metrics: IPerformanceMetrics[]; statistics: any }> {
+  ): Promise<IPerformanceMetrics[]> {
     try {
       const {
         startTime,
@@ -418,15 +418,7 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
 
       this.logger.debug('Performance metrics queried');
 
-      return {
-        metrics: result,
-        statistics: {
-          total: allMetrics.length,
-          returned: result.length,
-          startTime,
-          endTime,
-        },
-      };
+      return result;
     } catch (error) {
       this.logger.error('Failed to query performance metrics');
       throw error;
@@ -485,8 +477,7 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
     options: IPerformanceMetricsQueryOptions,
   ): Promise<IPerformanceMetricsStatistics> {
     try {
-      const result = await this.queryMetrics(options);
-      const metrics = result.metrics;
+      const metrics = await this.queryMetrics(options);
       const { startTime, endTime } = options;
 
       if (metrics.length === 0) {
@@ -581,10 +572,12 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
    * 注册性能收集器
    */
   public async registerCollector(
-    name: string,
     collector: IPerformanceCollector,
   ): Promise<boolean> {
     try {
+      const name = collector.getName
+        ? collector.getName()
+        : collector.constructor.name;
       this.collectors.set(name, collector);
       this.logger.info(`Collector registered: ${name}`);
       return true;
@@ -1224,16 +1217,40 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
   public async getRealTimeMetrics(): Promise<IPerformanceMetrics> {
     return {
       timestamp: new Date(),
+      tenantId: 'default',
+      serviceId: 'core',
+      instanceId: 'instance-1',
+      version: '1.0.0',
       systemMetrics: {
         cpuUsage: Math.random() * 100,
         memoryUsage: Math.random() * 100,
         diskUsage: Math.random() * 100,
-        networkIn: Math.random() * 1000,
-        networkOut: Math.random() * 1000,
+        networkUsage: Math.random() * 100,
         loadAverage: Math.random(),
         processCount: Math.floor(Math.random() * 1000),
         threadCount: Math.floor(Math.random() * 2000),
-        uptime: Math.floor(Math.random() * 86400),
+        fileDescriptorCount: Math.floor(Math.random() * 1000),
+      },
+      applicationMetrics: {
+        requestCount: Math.floor(Math.random() * 1000),
+        averageResponseTime: Math.random() * 1000,
+        maxResponseTime: Math.random() * 5000,
+        minResponseTime: Math.random() * 100,
+        errorRate: Math.random() * 0.1,
+        throughput: Math.random() * 100,
+        concurrentConnections: Math.floor(Math.random() * 100),
+        queueLength: Math.floor(Math.random() * 50),
+        cacheHitRate: Math.random(),
+      },
+      businessMetrics: {
+        activeUsers: Math.floor(Math.random() * 1000),
+        ordersPerMinute: Math.floor(Math.random() * 100),
+        revenuePerMinute: Math.random() * 10000,
+        userRegistrations: Math.floor(Math.random() * 50),
+        userLogins: Math.floor(Math.random() * 200),
+        pageViews: Math.floor(Math.random() * 5000),
+        sessionCount: Math.floor(Math.random() * 300),
+        conversionRate: Math.random() * 0.1,
       },
     };
   }

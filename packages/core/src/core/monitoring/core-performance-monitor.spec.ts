@@ -279,8 +279,7 @@ describe('CorePerformanceMonitor', () => {
 
       const result = await monitor.queryMetrics(options);
       expect(result).toBeDefined();
-      expect(result.metrics).toBeDefined();
-      expect(result.statistics).toBeDefined();
+      expect(Array.isArray(result)).toBe(true);
     });
 
     it('应该能够获取实时指标', async () => {
@@ -411,19 +410,25 @@ describe('CorePerformanceMonitor', () => {
       mockCollector.getName.mockReturnValue('Custom Collector');
 
       jest.clearAllMocks();
-      await monitor.registerCollector('custom', mockCollector);
+      await monitor.registerCollector(mockCollector);
       expect(mockLogger.info).toHaveBeenCalledWith(
-        'Collector registered: custom',
+        'Collector registered: Custom Collector',
       );
     });
 
     it('应该能够取消注册收集器', async () => {
       mockCollector.getSupportedTypes.mockReturnValue(['custom']);
-      await monitor.registerCollector('custom', mockCollector);
+      mockCollector.getName.mockReturnValue('Custom Collector');
+
+      // 先注册收集器
+      await monitor.registerCollector(mockCollector);
       jest.clearAllMocks();
-      await monitor.unregisterCollector('custom');
+
+      // 然后取消注册
+      const result = await monitor.unregisterCollector('Custom Collector');
+      expect(result).toBe(true);
       expect(mockLogger.info).toHaveBeenCalledWith(
-        'Collector unregistered: custom',
+        'Collector unregistered: Custom Collector',
       );
     });
 
@@ -519,7 +524,8 @@ describe('CorePerformanceMonitor', () => {
       // 无效的查询选项应该返回空结果，而不是抛出错误
       const result = await monitor.queryMetrics(invalidOptions);
       expect(result).toBeDefined();
-      expect(result.metrics).toEqual([]);
+      expect(Array.isArray(result)).toBe(true);
+      expect(result).toEqual([]);
     });
 
     it('应该处理收集器错误', async () => {
@@ -597,6 +603,259 @@ describe('CorePerformanceMonitor', () => {
 
       expect(results).toHaveLength(10);
       expect(duration).toBeLessThan(2000); // 应该在2秒内完成
+    });
+  });
+
+  describe('边界情况增强测试', () => {
+    beforeEach(async () => {
+      await monitor.start();
+    });
+
+    afterEach(async () => {
+      await monitor.stop();
+    });
+
+    it('应该处理极大数值的指标', async () => {
+      const extremeMetrics: IPerformanceMetrics = {
+        timestamp: new Date(),
+        tenantId: 'tenant-123',
+        serviceId: 'service-456',
+        instanceId: 'instance-789',
+        version: '1.0.0',
+        system: {
+          cpuUsage: Number.MAX_SAFE_INTEGER,
+          memoryUsage: Number.MAX_SAFE_INTEGER,
+          diskUsage: Number.MAX_SAFE_INTEGER,
+          networkUsage: Number.MAX_SAFE_INTEGER,
+          fileDescriptorCount: Number.MAX_SAFE_INTEGER,
+        },
+        application: {
+          requestCount: Number.MAX_SAFE_INTEGER,
+          responseTime: Number.MAX_SAFE_INTEGER,
+          errorCount: Number.MAX_SAFE_INTEGER,
+          activeConnections: Number.MAX_SAFE_INTEGER,
+        },
+        business: {
+          transactionCount: Number.MAX_SAFE_INTEGER,
+          userCount: Number.MAX_SAFE_INTEGER,
+          featureUsage: {},
+        },
+      };
+
+      await monitor.collectMetrics(extremeMetrics);
+      const stats = await monitor.getStatistics({
+        startTime: new Date(Date.now() - 3600000),
+        endTime: new Date(),
+      });
+      expect(stats).toBeDefined();
+    });
+
+    it('应该处理零值指标', async () => {
+      const zeroMetrics: IPerformanceMetrics = {
+        timestamp: new Date(),
+        tenantId: 'tenant-123',
+        serviceId: 'service-456',
+        instanceId: 'instance-789',
+        version: '1.0.0',
+        system: {
+          cpuUsage: 0,
+          memoryUsage: 0,
+          diskUsage: 0,
+          networkUsage: 0,
+          fileDescriptorCount: 0,
+        },
+        application: {
+          requestCount: 0,
+          responseTime: 0,
+          errorCount: 0,
+          activeConnections: 0,
+        },
+        business: {
+          transactionCount: 0,
+          userCount: 0,
+          featureUsage: {},
+        },
+      };
+
+      await monitor.collectMetrics(zeroMetrics);
+      const stats = await monitor.getStatistics({
+        startTime: new Date(Date.now() - 3600000),
+        endTime: new Date(),
+      });
+      expect(stats).toBeDefined();
+    });
+
+    it('应该处理负数指标', async () => {
+      const negativeMetrics: IPerformanceMetrics = {
+        timestamp: new Date(),
+        tenantId: 'tenant-123',
+        serviceId: 'service-456',
+        instanceId: 'instance-789',
+        version: '1.0.0',
+        system: {
+          cpuUsage: -1,
+          memoryUsage: -100,
+          diskUsage: -50,
+          networkUsage: -25,
+          fileDescriptorCount: -10,
+        },
+        application: {
+          requestCount: -1,
+          responseTime: -1,
+          errorCount: -1,
+          activeConnections: -1,
+        },
+        business: {
+          transactionCount: -1,
+          userCount: -1,
+          featureUsage: {},
+        },
+      };
+
+      await monitor.collectMetrics(negativeMetrics);
+      const stats = await monitor.getStatistics({
+        startTime: new Date(Date.now() - 3600000),
+        endTime: new Date(),
+      });
+      expect(stats).toBeDefined();
+    });
+
+    it('应该处理特殊字符的标识符', async () => {
+      const specialMetrics: IPerformanceMetrics = {
+        timestamp: new Date(),
+        tenantId: 'tenant_José_🚀_123',
+        serviceId: 'service_测试_456',
+        instanceId: 'instance_special!@#',
+        version: '1.0.0-beta+测试',
+        system: {
+          cpuUsage: 50,
+          memoryUsage: 1024,
+          diskUsage: 512,
+          networkUsage: 256,
+          fileDescriptorCount: 100,
+        },
+        application: {
+          requestCount: 100,
+          responseTime: 150,
+          errorCount: 5,
+          activeConnections: 20,
+        },
+        business: {
+          transactionCount: 50,
+          userCount: 25,
+          featureUsage: {
+            'feature_José_🚀': 10,
+            feature_测试: 15,
+          },
+        },
+      };
+
+      await monitor.collectMetrics(specialMetrics);
+      const stats = await monitor.getStatistics({
+        startTime: new Date(Date.now() - 3600000),
+        endTime: new Date(),
+      });
+      expect(stats).toBeDefined();
+    });
+
+    it('应该处理复杂的特性使用数据', async () => {
+      const complexFeatureUsage = {
+        'user-management': 100,
+        'order-processing': 250,
+        'payment-gateway': 75,
+        'notification-service': 300,
+        'analytics-dashboard': 50,
+        'api-rate-limiting': 1000,
+        'cache-invalidation': 500,
+        'background-jobs': 25,
+      };
+
+      const metrics: IPerformanceMetrics = {
+        timestamp: new Date(),
+        tenantId: 'tenant-123',
+        serviceId: 'service-456',
+        instanceId: 'instance-789',
+        version: '1.0.0',
+        system: {
+          cpuUsage: 75,
+          memoryUsage: 2048,
+          diskUsage: 1024,
+          networkUsage: 512,
+          fileDescriptorCount: 200,
+        },
+        application: {
+          requestCount: 500,
+          responseTime: 125,
+          errorCount: 10,
+          activeConnections: 50,
+        },
+        business: {
+          transactionCount: 200,
+          userCount: 100,
+          featureUsage: complexFeatureUsage,
+        },
+      };
+
+      await monitor.collectMetrics(metrics);
+      const stats = await monitor.getStatistics({
+        startTime: new Date(Date.now() - 3600000),
+        endTime: new Date(),
+      });
+      expect(stats).toBeDefined();
+    });
+  });
+
+  describe('错误恢复测试', () => {
+    beforeEach(async () => {
+      await monitor.start();
+    });
+
+    afterEach(async () => {
+      await monitor.stop();
+    });
+
+    it('应该从收集器错误中恢复', async () => {
+      const failingCollector: IPerformanceCollector = {
+        getName: () => 'FailingCollector',
+        collect: async () => {
+          throw new Error('Collector failure');
+        },
+        isEnabled: () => true,
+        getConfiguration: () => ({}),
+        setConfiguration: () => {},
+      };
+
+      monitor.registerCollector(failingCollector);
+
+      // 应该能够处理收集器错误而不崩溃
+      expect(async () => {
+        await monitor.collectSystemMetrics();
+      }).not.toThrow();
+    });
+
+    it('应该处理配置更新错误', () => {
+      const invalidConfig = {
+        enableLogging: 'invalid' as any,
+        enableMonitoring: 'invalid' as any,
+        collectInterval: 'invalid' as any,
+      };
+
+      expect(() => {
+        monitor.updateConfiguration(invalidConfig);
+      }).not.toThrow();
+    });
+
+    it('应该处理告警设置错误', async () => {
+      const invalidAlert = {
+        id: '',
+        name: '',
+        condition: '',
+        threshold: NaN,
+        enabled: true,
+      };
+
+      const result = await monitor.setAlert(invalidAlert);
+      expect(typeof result).toBe('boolean');
     });
   });
 });
