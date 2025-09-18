@@ -4,7 +4,7 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ConfigService, ConfigModule } from '@aiofix/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   IDatabaseAdapter,
@@ -12,10 +12,10 @@ import {
 } from '../interfaces/database.interface';
 
 /**
- * @interface MockDatabaseAdapter
+ * @interface IMockDatabaseAdapter
  * @description 模拟数据库适配器接口
  */
-export interface MockDatabaseAdapter extends Partial<IDatabaseAdapter> {
+export interface IMockDatabaseAdapter extends Partial<IDatabaseAdapter> {
   query: jest.MockedFunction<IDatabaseAdapter['query']>;
   execute: jest.MockedFunction<IDatabaseAdapter['execute']>;
   transaction: jest.MockedFunction<IDatabaseAdapter['transaction']>;
@@ -44,9 +44,9 @@ export interface MockDatabaseAdapter extends Partial<IDatabaseAdapter> {
 /**
  * @function createMockDatabaseAdapter
  * @description 创建模拟数据库适配器
- * @returns {MockDatabaseAdapter} 模拟数据库适配器
+ * @returns {IMockDatabaseAdapter} 模拟数据库适配器
  */
-export function createMockDatabaseAdapter(): MockDatabaseAdapter {
+export function createMockDatabaseAdapter(): IMockDatabaseAdapter {
   return {
     name: 'mock-adapter',
     type: 'postgresql',
@@ -88,7 +88,7 @@ export function createMockConfigService(
   } as any;
 
   // 设置默认配置
-  const defaultConfigs = {
+  const defaultConfigs: Record<string, string> = {
     POSTGRES_HOST: 'localhost',
     POSTGRES_PORT: '5432',
     POSTGRES_USER: 'aiofix_user',
@@ -134,13 +134,7 @@ export async function createTestModule(
   imports: any[] = [],
 ): Promise<TestingModule> {
   return Test.createTestingModule({
-    imports: [
-      ConfigModule.forRoot({
-        isGlobal: true,
-        envFilePath: '.env.test',
-      }),
-      ...imports,
-    ],
+    imports: [ConfigModule, ...imports],
     providers,
   }).compile();
 }
@@ -242,7 +236,7 @@ export function cleanupMockEnvironment(keys: string[] = []): void {
     ...keys,
   ];
 
-  defaultKeys.forEach(key => {
+  defaultKeys.forEach((key) => {
     delete process.env[key];
   });
 }

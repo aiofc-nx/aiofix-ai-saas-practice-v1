@@ -5,14 +5,14 @@
  * @since 1.0.0
  */
 
-// Domain层目前为空，等待实现核心业务逻辑
-// 包括：多租户、安全权限、验证规则等
+// 实体系统 - 已从core/entities/移动到此处
+export * from './entities';
 
-// TODO: 实现多租户核心功能
+// 多租户功能已移动到独立的@aiofix/tenant模块
 // export * from './multi-tenant';
 
-// TODO: 实现安全权限系统  
-// export * from './security';
+// 安全权限系统 - 已实现
+export * from './security';
 
-// TODO: 实现验证规则系统
-// export * from './validation';
+// 验证规则系统 - 已实现
+export * from './validation';

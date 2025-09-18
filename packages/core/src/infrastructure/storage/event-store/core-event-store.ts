@@ -61,9 +61,9 @@ import { Observable, of, throwError } from 'rxjs';
 import type { ILoggerService } from '@aiofix/logging';
 import { LogContext } from '@aiofix/logging';
 import { v4 as uuidv4 } from 'uuid';
-import type { EntityId } from '../../../core/entities/value-objects/entity-id';
-import type { BaseDomainEvent } from '../../../core/cqrs/events/base/base-domain-event';
-import type { IAsyncContext } from '../../../core/context/async-context.interface';
+import type { EntityId } from '../../../domain/entities/value-objects/entity-id';
+import type { BaseDomainEvent } from '../../../domain/entities/base/base-domain-event';
+import type { IAsyncContext } from '../../../common/context/async-context.interface';
 import {
   IEventStore,
   IEventStoreOptions,

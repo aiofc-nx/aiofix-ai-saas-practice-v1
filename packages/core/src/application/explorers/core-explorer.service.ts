@@ -56,13 +56,13 @@ import {
   getQueryHandlerMetadata,
   getEventHandlerMetadata,
   getSagaMetadata,
-} from '../../core/decorators';
+} from '../../common/decorators';
 import {
   ICommandHandlerMetadata,
   IQueryHandlerMetadata,
   IEventHandlerMetadata,
   ISagaMetadata,
-} from '../../core/decorators/metadata.interfaces';
+} from '../../common/decorators/metadata.interfaces';
 
 /**
  * 处理器信息接口

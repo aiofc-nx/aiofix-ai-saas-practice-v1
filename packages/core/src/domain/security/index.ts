@@ -5,5 +5,10 @@
  * @since 1.0.0
  */
 
-export * from './permissions';
-export * from './validation';
+// 权限管理系统
+export * from './permission.entity';
+export * from './role.entity';
+export * from './user-role-assignment.entity';
+
+// 安全策略系统
+export * from './security-policy.entity';

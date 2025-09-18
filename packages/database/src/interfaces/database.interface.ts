@@ -15,7 +15,6 @@
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import type { Connection, QueryResult } from 'pg';
 import type { Knex } from 'knex';
-import type { Connection as MikroOrmConnection } from '@mikro-orm/core';
 
 /**
  * @interface DatabaseConnection
@@ -29,7 +28,7 @@ export interface DatabaseConnection {
   /** 连接配置 */
   config: DatabaseConfig;
   /** 连接实例 */
-  instance: Connection | Knex | MikroOrmConnection;
+  instance: Connection | Knex;
   /** 最后活动时间 */
   lastActivity: Date;
   /** 错误信息 */

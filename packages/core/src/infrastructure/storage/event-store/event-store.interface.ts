@@ -35,9 +35,9 @@
  */
 
 import { Observable } from 'rxjs';
-import type { EntityId } from '../../../core/entities/value-objects/entity-id';
-import type { BaseDomainEvent } from '../../../core/cqrs/events/base/base-domain-event';
-import type { IAsyncContext } from '../../../core/context/async-context.interface';
+import type { EntityId } from '../../../domain/entities/value-objects/entity-id';
+import type { BaseDomainEvent } from '../../../domain/entities/base/base-domain-event';
+import type { IAsyncContext } from '../../../common/context/async-context.interface';
 
 /**
  * 事件存储选项

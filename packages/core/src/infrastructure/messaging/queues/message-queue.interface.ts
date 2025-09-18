@@ -1,800 +1,319 @@
 /**
- * 消息队列接口定义
+ * 消息队列接口
  *
- * 定义了消息队列系统的核心接口，包括消息发布、订阅、
- * 处理、重试、死信队列等功能。
+ * @description 定义消息队列的核心功能，包括消息的发送、接收、处理等操作
+ * 消息队列是异步通信的基础设施，支持发布-订阅、点对点等通信模式
  *
  * ## 业务规则
  *
- * ### 消息发布规则
- * - 消息必须具有唯一标识符
- * - 消息必须支持优先级设置
- * - 消息必须支持延迟发送
- * - 消息必须支持批量发布
+ * ### 消息发送规则
+ * - 消息必须具有有效的类型和载荷
+ * - 支持消息优先级和过期时间设置
+ * - 消息发送必须具有原子性
  *
- * ### 消息订阅规则
- * - 支持多种订阅模式（点对点、发布订阅）
- * - 支持消息过滤和路由
- * - 支持消费者组管理
- * - 支持消息确认机制
+ * ### 消息接收规则
+ * - 支持按消息类型过滤接收
+ * - 支持消息的批量接收
+ * - 提供消息确认机制
  *
  * ### 消息处理规则
- * - 支持消息重试机制
+ * - 支持消息的异步处理
+ * - 提供消息重试机制
  * - 支持死信队列处理
- * - 支持消息超时处理
- * - 支持消息去重
  *
- * ### 性能规则
- * - 支持消息批处理
- * - 支持异步处理
- * - 支持背压控制
- * - 支持流量控制
+ * ### 性能优化规则
+ * - 支持消息的批量操作
+ * - 提供消息的持久化存储
+ * - 支持消息的压缩和序列化
  *
- * @description 消息队列接口定义
+ * @example
+ * ```typescript
+ * // 发送消息
+ * await messageQueue.send('UserCreated', {
+ *   userId: 'user-123',
+ *   email: 'user@example.com'
+ * }, {
+ *   priority: MessagePriority.HIGH,
+ *   ttl: 3600000
+ * });
+ *
+ * // 接收消息
+ * const messages = await messageQueue.receive('UserCreated', 10);
+ *
+ * // 确认消息
+ * await messageQueue.acknowledge(message.id);
+ * ```
+ *
  * @since 1.0.0
  */
 
-import { Observable } from 'rxjs';
-import type { IAsyncContext } from '../../../core/context/async-context.interface';
+import type { IMessage, IMessageOptions } from './message.interface';
+import type { IMessageHandler } from './message-handler.interface';
 
 /**
- * 消息优先级枚举
+ * 消息队列统计信息接口
+ *
+ * @description 定义消息队列的性能统计信息
  */
-export enum MessagePriority {
-  /**
-   * 低优先级
-   */
-  LOW = 1,
-
-  /**
-   * 普通优先级
-   */
-  NORMAL = 5,
-
-  /**
-   * 高优先级
-   */
-  HIGH = 10,
-
-  /**
-   * 紧急优先级
-   */
-  URGENT = 15,
-}
-
-/**
- * 消息状态枚举
- */
-export enum MessageStatus {
-  /**
-   * 待处理
-   */
-  PENDING = 'pending',
-
-  /**
-   * 处理中
-   */
-  PROCESSING = 'processing',
-
-  /**
-   * 已完成
-   */
-  COMPLETED = 'completed',
-
-  /**
-   * 失败
-   */
-  FAILED = 'failed',
-
-  /**
-   * 重试中
-   */
-  RETRYING = 'retrying',
-
-  /**
-   * 已取消
-   */
-  CANCELLED = 'cancelled',
-
-  /**
-   * 已过期
-   */
-  EXPIRED = 'expired',
-
-  /**
-   * 死信
-   */
-  DEAD_LETTER = 'dead_letter',
-}
-
-/**
- * 消息类型枚举
- */
-export enum MessageType {
-  /**
-   * 命令消息
-   */
-  COMMAND = 'command',
-
-  /**
-   * 事件消息
-   */
-  EVENT = 'event',
-
-  /**
-   * 查询消息
-   */
-  QUERY = 'query',
-
-  /**
-   * 通知消息
-   */
-  NOTIFICATION = 'notification',
-
-  /**
-   * 任务消息
-   */
-  TASK = 'task',
-}
-
-/**
- * 消息接口
- */
-export interface IMessage {
-  /**
-   * 消息ID
-   */
-  id: string;
-
-  /**
-   * 消息类型
-   */
-  type: MessageType;
-
-  /**
-   * 消息主题
-   */
-  topic: string;
-
-  /**
-   * 消息数据
-   */
-  data: Record<string, unknown>;
-
-  /**
-   * 消息元数据
-   */
-  metadata: Record<string, unknown>;
-
-  /**
-   * 消息优先级
-   */
-  priority: MessagePriority;
-
-  /**
-   * 消息状态
-   */
-  status: MessageStatus;
-
-  /**
-   * 创建时间
-   */
-  createdAt: Date;
-
-  /**
-   * 更新时间
-   */
-  updatedAt: Date;
-
-  /**
-   * 过期时间
-   */
-  expiresAt?: Date;
-
-  /**
-   * 延迟时间（毫秒）
-   */
-  delay?: number;
-
-  /**
-   * 重试次数
-   */
-  retryCount: number;
-
-  /**
-   * 最大重试次数
-   */
-  maxRetries: number;
-
-  /**
-   * 重试间隔（毫秒）
-   */
-  retryInterval: number;
-
-  /**
-   * 租户ID
-   */
-  tenantId?: string;
-
-  /**
-   * 用户ID
-   */
-  userId?: string;
-
-  /**
-   * 组织ID
-   */
-  organizationId?: string;
-
-  /**
-   * 部门ID
-   */
-  departmentId?: string;
-
-  /**
-   * 请求ID
-   */
-  requestId?: string;
-
-  /**
-   * 关联ID
-   */
-  correlationId?: string;
-
-  /**
-   * 原因ID
-   */
-  causationId?: string;
-}
-
-/**
- * 消息发布选项
- */
-export interface IMessagePublishOptions {
-  /**
-   * 消息优先级
-   */
-  priority?: MessagePriority;
-
-  /**
-   * 延迟时间（毫秒）
-   */
-  delay?: number;
-
-  /**
-   * 过期时间
-   */
-  expiresAt?: Date;
-
-  /**
-   * 最大重试次数
-   */
-  maxRetries?: number;
-
-  /**
-   * 重试间隔（毫秒）
-   */
-  retryInterval?: number;
-
-  /**
-   * 是否启用去重
-   */
-  enableDeduplication?: boolean;
-
-  /**
-   * 去重键
-   */
-  deduplicationKey?: string;
-
-  /**
-   * 是否启用事务
-   */
-  enableTransaction?: boolean;
-
-  /**
-   * 事务ID
-   */
-  transactionId?: string;
-
-  /**
-   * 是否启用压缩
-   */
-  enableCompression?: boolean;
-
-  /**
-   * 是否启用加密
-   */
-  enableEncryption?: boolean;
-
-  /**
-   * 消息标签
-   */
-  tags?: string[];
-
-  /**
-   * 消息属性
-   */
-  properties?: Record<string, unknown>;
-}
-
-/**
- * 消息发布结果
- */
-export interface IMessagePublishResult {
-  /**
-   * 是否成功
-   */
-  success: boolean;
-
-  /**
-   * 错误信息
-   */
-  error?: string;
-
-  /**
-   * 消息ID
-   */
-  messageId: string;
-
-  /**
-   * 发布时间（毫秒）
-   */
-  publishTime: number;
-
-  /**
-   * 队列名称
-   */
-  queueName: string;
-
-  /**
-   * 元数据
-   */
-  metadata?: Record<string, unknown>;
-}
-
-/**
- * 消息订阅选项
- */
-export interface IMessageSubscribeOptions {
-  /**
-   * 消费者组
-   */
-  consumerGroup?: string;
-
-  /**
-   * 消费者ID
-   */
-  consumerId?: string;
-
-  /**
-   * 是否启用自动确认
-   */
-  enableAutoAck?: boolean;
-
-  /**
-   * 确认超时时间（毫秒）
-   */
-  ackTimeout?: number;
-
-  /**
-   * 预取数量
-   */
-  prefetchCount?: number;
-
-  /**
-   * 是否启用消息过滤
-   */
-  enableFiltering?: boolean;
-
-  /**
-   * 消息过滤器
-   */
-  filter?: Record<string, unknown>;
-
-  /**
-   * 是否启用死信队列
-   */
-  enableDeadLetter?: boolean;
-
-  /**
-   * 死信队列名称
-   */
-  deadLetterQueue?: string;
-
-  /**
-   * 是否启用消息去重
-   */
-  enableDeduplication?: boolean;
-
-  /**
-   * 消息处理超时时间（毫秒）
-   */
-  processingTimeout?: number;
-
-  /**
-   * 是否启用批量处理
-   */
-  enableBatchProcessing?: boolean;
-
-  /**
-   * 批量大小
-   */
-  batchSize?: number;
-
-  /**
-   * 批量超时时间（毫秒）
-   */
-  batchTimeout?: number;
-}
-
-/**
- * 消息处理结果
- */
-export interface IMessageProcessResult {
-  /**
-   * 是否成功
-   */
-  success: boolean;
-
-  /**
-   * 错误信息
-   */
-  error?: string;
-
-  /**
-   * 消息ID
-   */
-  messageId: string;
-
-  /**
-   * 处理时间（毫秒）
-   */
-  processingTime: number;
-
-  /**
-   * 是否需要重试
-   */
-  shouldRetry: boolean;
-
-  /**
-   * 重试延迟时间（毫秒）
-   */
-  retryDelay?: number;
-
-  /**
-   * 是否发送到死信队列
-   */
-  sendToDeadLetter: boolean;
-
-  /**
-   * 元数据
-   */
-  metadata?: Record<string, unknown>;
-}
-
-/**
- * 消息处理器接口
- */
-export interface IMessageHandler {
-  /**
-   * 处理器名称
-   */
-  name: string;
-
-  /**
-   * 处理的消息类型
-   */
-  messageType: MessageType;
-
-  /**
-   * 处理的消息主题
-   */
-  topic: string;
-
-  /**
-   * 处理消息
-   */
-  handle(
-    message: IMessage,
-    context?: IAsyncContext,
-  ): Observable<IMessageProcessResult>;
-
-  /**
-   * 是否应该处理消息
-   */
-  shouldHandle(message: IMessage): boolean;
-
-  /**
-   * 获取处理器配置
-   */
-  getConfig(): Record<string, unknown>;
-}
-
-/**
- * 消息队列统计信息
- */
-export interface IMessageQueueStatistics {
-  /**
-   * 总消息数量
-   */
-  totalMessages: number;
-
-  /**
-   * 待处理消息数量
-   */
-  pendingMessages: number;
-
-  /**
-   * 处理中消息数量
-   */
-  processingMessages: number;
-
-  /**
-   * 已完成消息数量
-   */
-  completedMessages: number;
-
-  /**
-   * 失败消息数量
-   */
-  failedMessages: number;
-
-  /**
-   * 死信消息数量
-   */
-  deadLetterMessages: number;
-
-  /**
-   * 平均处理时间（毫秒）
-   */
-  averageProcessingTime: number;
-
-  /**
-   * 按类型统计
-   */
-  byType: Record<MessageType, number>;
-
-  /**
-   * 按状态统计
-   */
-  byStatus: Record<MessageStatus, number>;
-
-  /**
-   * 按优先级统计
-   */
-  byPriority: Record<MessagePriority, number>;
-
-  /**
-   * 按租户统计
-   */
-  byTenant: Record<string, number>;
-
-  /**
-   * 按时间统计
-   */
-  byTime: {
-    lastHour: number;
-    lastDay: number;
-    lastWeek: number;
-    lastMonth: number;
-  };
-
-  /**
-   * 最后更新时间
-   */
-  lastUpdatedAt: Date;
-}
-
-/**
- * 消息队列配置
- */
-export interface IMessageQueueConfiguration {
-  /**
-   * 队列名称
-   */
-  queueName: string;
-
-  /**
-   * 是否启用
-   */
-  enabled: boolean;
-
-  /**
-   * 最大消息数量
-   */
-  maxMessages: number;
-
-  /**
-   * 消息过期时间（毫秒）
-   */
-  messageExpiration: number;
-
-  /**
-   * 默认重试次数
-   */
-  defaultRetries: number;
-
-  /**
-   * 默认重试间隔（毫秒）
-   */
-  defaultRetryInterval: number;
-
-  /**
-   * 是否启用死信队列
-   */
-  enableDeadLetter: boolean;
-
-  /**
-   * 死信队列名称
-   */
-  deadLetterQueue: string;
-
-  /**
-   * 是否启用消息去重
-   */
-  enableDeduplication: boolean;
-
-  /**
-   * 去重窗口时间（毫秒）
-   */
-  deduplicationWindow: number;
-
-  /**
-   * 是否启用压缩
-   */
-  enableCompression: boolean;
-
-  /**
-   * 是否启用加密
-   */
-  enableEncryption: boolean;
-
-  /**
-   * 是否启用多租户
-   */
-  enableMultiTenant: boolean;
-
-  /**
-   * 是否启用监控
-   */
-  enableMonitoring: boolean;
-
-  /**
-   * 监控间隔（毫秒）
-   */
-  monitoringInterval: number;
+export interface IQueueStatistics {
+  /** 队列名称 */
+  readonly queueName: string;
+  /** 总消息数量 */
+  readonly totalMessages: number;
+  /** 待处理消息数量 */
+  readonly pendingMessages: number;
+  /** 处理中消息数量 */
+  readonly processingMessages: number;
+  /** 已完成消息数量 */
+  readonly completedMessages: number;
+  /** 失败消息数量 */
+  readonly failedMessages: number;
+  /** 平均处理时间（毫秒） */
+  readonly averageProcessingTime: number;
+  /** 最后更新时间 */
+  readonly lastUpdatedAt: Date;
 }
 
 /**
  * 消息队列接口
+ *
+ * @description 定义消息队列的核心功能
  */
 export interface IMessageQueue {
   /**
-   * 发布消息
+   * 发送消息到队列
+   *
+   * @description 将消息发送到指定的队列中
+   * 支持消息优先级、过期时间等选项设置
+   *
+   * @param messageType 消息类型
+   * @param payload 消息载荷
+   * @param options 消息选项
+   * @returns 发送的消息对象
+   *
+   * @example
+   * ```typescript
+   * const message = await messageQueue.send('UserCreated', {
+   *   userId: 'user-123',
+   *   email: 'user@example.com'
+   * }, {
+   *   priority: MessagePriority.HIGH,
+   *   ttl: 3600000
+   * });
+   * ```
    */
-  publish(
-    topic: string,
-    data: Record<string, unknown>,
-    options?: IMessagePublishOptions,
-    context?: IAsyncContext,
-  ): Observable<IMessagePublishResult>;
+  send(
+    messageType: string,
+    payload: Record<string, unknown>,
+    options?: IMessageOptions,
+  ): Promise<IMessage>;
 
   /**
-   * 批量发布消息
+   * 批量发送消息
+   *
+   * @description 批量发送多个消息到队列中
+   * 提供更好的性能和原子性保证
+   *
+   * @param messages 消息列表
+   * @returns 发送的消息对象列表
+   *
+   * @example
+   * ```typescript
+   * const messages = await messageQueue.sendBatch([
+   *   { type: 'UserCreated', payload: userData1 },
+   *   { type: 'UserCreated', payload: userData2 }
+   * ]);
+   * ```
    */
-  publishBatch(
+  sendBatch(
     messages: Array<{
-      topic: string;
-      data: Record<string, unknown>;
-      options?: IMessagePublishOptions;
+      type: string;
+      payload: Record<string, unknown>;
+      options?: IMessageOptions;
     }>,
-    context?: IAsyncContext,
-  ): Observable<IMessagePublishResult[]>;
+  ): Promise<IMessage[]>;
 
   /**
-   * 订阅消息
+   * 接收消息
+   *
+   * @description 从队列中接收指定类型的消息
+   * 支持批量接收和消息过滤
+   *
+   * @param messageType 消息类型，可选
+   * @param maxMessages 最大接收消息数量
+   * @param timeout 接收超时时间（毫秒）
+   * @returns 接收到的消息列表
+   *
+   * @example
+   * ```typescript
+   * // 接收特定类型的消息
+   * const messages = await messageQueue.receive('UserCreated', 10);
+   *
+   * // 接收任意类型的消息
+   * const anyMessages = await messageQueue.receive(undefined, 5);
+   * ```
    */
-  subscribe(
-    topic: string,
-    handler: IMessageHandler,
-    options?: IMessageSubscribeOptions,
-    context?: IAsyncContext,
-  ): Observable<void>;
+  receive(
+    messageType?: string,
+    maxMessages?: number,
+    timeout?: number,
+  ): Promise<IMessage[]>;
 
   /**
-   * 取消订阅
+   * 确认消息处理完成
+   *
+   * @description 确认消息已被成功处理
+   * 消息确认后将从队列中移除
+   *
+   * @param messageId 消息ID
+   * @returns 确认是否成功
+   *
+   * @example
+   * ```typescript
+   * await messageQueue.acknowledge(message.id);
+   * ```
    */
-  unsubscribe(
-    topic: string,
-    handlerName: string,
-    context?: IAsyncContext,
-  ): Observable<boolean>;
+  acknowledge(messageId: string): Promise<boolean>;
 
   /**
-   * 获取消息
-   */
-  getMessage(
-    messageId: string,
-    context?: IAsyncContext,
-  ): Observable<IMessage | null>;
-
-  /**
-   * 确认消息
-   */
-  acknowledge(messageId: string, context?: IAsyncContext): Observable<boolean>;
-
-  /**
-   * 拒绝消息
+   * 拒绝消息处理
+   *
+   * @description 拒绝消息处理，可选择是否重新入队
+   * 拒绝的消息可能会被重新处理或发送到死信队列
+   *
+   * @param messageId 消息ID
+   * @param requeue 是否重新入队
+   * @param reason 拒绝原因
+   * @returns 拒绝是否成功
+   *
+   * @example
+   * ```typescript
+   * await messageQueue.reject(message.id, true, '处理失败');
+   * ```
    */
   reject(
     messageId: string,
+    requeue?: boolean,
     reason?: string,
-    context?: IAsyncContext,
-  ): Observable<boolean>;
+  ): Promise<boolean>;
 
   /**
-   * 重新排队消息
+   * 注册消息处理器
+   *
+   * @description 注册消息处理器到队列中
+   * 处理器将自动处理指定类型的消息
+   *
+   * @param messageType 消息类型
+   * @param handler 消息处理器
+   * @returns 注册是否成功
+   *
+   * @example
+   * ```typescript
+   * await messageQueue.registerHandler('UserCreated', userCreatedHandler);
+   * ```
    */
-  requeue(
-    messageId: string,
-    delay?: number,
-    context?: IAsyncContext,
-  ): Observable<boolean>;
+  registerHandler(
+    messageType: string,
+    handler: IMessageHandler,
+  ): Promise<boolean>;
 
   /**
-   * 发送到死信队列
+   * 注销消息处理器
+   *
+   * @description 从队列中注销消息处理器
+   *
+   * @param messageType 消息类型
+   * @param handlerName 处理器名称
+   * @returns 注销是否成功
+   *
+   * @example
+   * ```typescript
+   * await messageQueue.unregisterHandler('UserCreated', 'UserCreatedHandler');
+   * ```
    */
-  sendToDeadLetter(
-    messageId: string,
-    reason?: string,
-    context?: IAsyncContext,
-  ): Observable<boolean>;
+  unregisterHandler(messageType: string, handlerName: string): Promise<boolean>;
 
   /**
    * 获取队列统计信息
+   *
+   * @description 获取队列的性能统计信息
+   * 包括消息数量、处理时间等指标
+   *
+   * @returns 队列统计信息
+   *
+   * @example
+   * ```typescript
+   * const stats = await messageQueue.getStatistics();
+   * console.log('待处理消息数量:', stats.pendingMessages);
+   * ```
    */
-  getStatistics(context?: IAsyncContext): Observable<IMessageQueueStatistics>;
-
-  /**
-   * 清理过期消息
-   */
-  cleanupExpiredMessages(
-    retentionDays: number,
-    context?: IAsyncContext,
-  ): Observable<number>;
-
-  /**
-   * 暂停队列
-   */
-  pauseQueue(context?: IAsyncContext): Observable<boolean>;
-
-  /**
-   * 恢复队列
-   */
-  resumeQueue(context?: IAsyncContext): Observable<boolean>;
+  getStatistics(): Promise<IQueueStatistics>;
 
   /**
    * 清空队列
+   *
+   * @description 清空队列中的所有消息
+   * 通常用于测试或维护目的
+   *
+   * @param messageType 消息类型，可选
+   * @returns 清空的消息数量
+   *
+   * @example
+   * ```typescript
+   * // 清空所有消息
+   * const clearedCount = await messageQueue.clear();
+   *
+   * // 清空特定类型的消息
+   * const clearedCount = await messageQueue.clear('UserCreated');
+   * ```
    */
-  clearQueue(context?: IAsyncContext): Observable<boolean>;
+  clear(messageType?: string): Promise<number>;
 
   /**
-   * 健康检查
+   * 检查队列是否健康
+   *
+   * @description 检查队列的健康状态
+   * 用于监控和故障检测
+   *
+   * @returns 队列是否健康
+   *
+   * @example
+   * ```typescript
+   * const isHealthy = await messageQueue.isHealthy();
+   * if (!isHealthy) {
+   *   // 处理不健康的队列
+   * }
+   * ```
    */
-  healthCheck(context?: IAsyncContext): Observable<boolean>;
+  isHealthy(): Promise<boolean>;
 
   /**
    * 启动队列
+   *
+   * @description 启动消息队列服务
+   * 开始处理消息和运行处理器
+   *
+   * @returns 启动是否成功
+   *
+   * @example
+   * ```typescript
+   * await messageQueue.start();
+   * ```
    */
   start(): Promise<void>;
 
   /**
    * 停止队列
+   *
+   * @description 停止消息队列服务
+   * 停止处理消息和运行处理器
+   *
+   * @returns 停止是否成功
+   *
+   * @example
+   * ```typescript
+   * await messageQueue.stop();
+   * ```
    */
   stop(): Promise<void>;
-
-  /**
-   * 检查是否已启动
-   */
-  isStarted(): boolean;
 }

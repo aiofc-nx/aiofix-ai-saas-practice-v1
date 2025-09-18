@@ -29,7 +29,6 @@ import type {
   TransactionOptions,
 } from '../interfaces/database.interface';
 import type { Connection } from 'pg';
-import type { Connection as MikroOrmConnection } from '@mikro-orm/core';
 
 /**
  * @class PostgreSQLAdapter
@@ -78,7 +77,7 @@ export class PostgreSQLAdapter implements IDatabaseAdapter {
     this.initializeKnex();
 
     // 自动连接数据库
-    this.connect().catch(error => {
+    this.connect().catch((error) => {
       this.logger.warn(
         'Failed to auto-connect to database, will retry on first query',
         LogContext.DATABASE,
@@ -310,7 +309,7 @@ export class PostgreSQLAdapter implements IDatabaseAdapter {
         tag: options.tag,
       });
 
-      const result = await this.knexInstance.transaction(async trx => {
+      const result = await this.knexInstance.transaction(async (trx) => {
         if (options.isolationLevel) {
           await trx.raw(
             `SET TRANSACTION ISOLATION LEVEL ${options.isolationLevel.toUpperCase()}`,
@@ -445,7 +444,7 @@ export class PostgreSQLAdapter implements IDatabaseAdapter {
       id: this.connectionId,
       status: this.isConnectedFlag ? 'connected' : 'disconnected',
       config: this.config,
-      instance: this.pool as unknown as Connection | Knex | MikroOrmConnection,
+      instance: this.pool as unknown as Connection | Knex,
       lastActivity: new Date(),
     };
   }
@@ -507,7 +506,7 @@ export class PostgreSQLAdapter implements IDatabaseAdapter {
       });
     });
 
-    this.pool.on('error', err => {
+    this.pool.on('error', (err) => {
       this.logger.error(
         'Unexpected error on idle client',
         LogContext.DATABASE,

@@ -12,8 +12,8 @@
  * @since 1.0.0
  */
 
-// 核心架构层
-export * from './core';
+// 通用功能层 (包含所有横切关注点)
+export * from './common';
 
 // 基础设施层
 export * from './infrastructure';
@@ -24,5 +24,5 @@ export * from './application';
 // 领域层
 export * from './domain';
 
-// 共享层
-export * from './shared';
+// 共享层已合并到通用功能层
+// export * from './shared';

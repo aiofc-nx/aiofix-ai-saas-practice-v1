@@ -7,8 +7,11 @@
  * @since 1.0.0
  */
 
-export * from './fastify.interface';
-export * from './fastify-adapter';
+// 基础模块导出
 export * from './fastify-module';
-export * from './fastify-plugin';
-export * from './fastify-middleware';
+
+// TODO: 重新实现Fastify集成
+// - Fastify适配器
+// - Fastify中间件
+// - Fastify插件
+// - Fastify接口定义
