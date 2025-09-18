@@ -1,49 +1,114 @@
 /**
- * CoreFastify适配器
+ * 企业级Fastify核心适配器
  *
- * @description Fastify服务器核心适配器实现，负责管理Fastify实例的生命周期
+ * @description 企业级Fastify功能的核心引擎，提供独立的Fastify服务器管理和企业级功能实现
+ *
+ * ## 核心特点
+ *
+ * ### 🎯 **设计定位**
+ * - **独立引擎**：不依赖NestJS，可独立运行的Fastify服务器管理器
+ * - **功能核心**：所有企业级功能的实际实现者和管理者
+ * - **内部使用**：主要被EnterpriseFastifyAdapter内部调用，不直接面向应用开发者
+ * - **纯Fastify**：基于原生Fastify API，提供最佳性能和兼容性
+ *
+ * ### 🏗️ **架构职责**
+ * - **服务器生命周期**：完整管理Fastify实例的创建、启动、停止、清理
+ * - **插件管理**：企业级插件的注册、卸载、健康检查、生命周期管理
+ * - **中间件管理**：智能中间件注册、优先级排序、路径/方法过滤
+ * - **路由管理**：动态路由注册、冲突检测、性能监控
+ * - **监控系统**：实时性能指标收集、健康状态检查、系统资源监控
+ * - **多租户支持**：租户上下文管理、数据隔离、安全策略
+ *
+ * ### 🚀 **企业级功能**
+ * - **高性能监控**：请求计数、响应时间、错误率、系统资源使用
+ * - **完整健康检查**：组件级健康状态、依赖检查、自动恢复
+ * - **智能插件系统**：依赖验证、优先级管理、热插拔支持
+ * - **中间件过滤**：路径匹配、方法过滤、条件执行
+ * - **错误处理**：统一错误处理、错误恢复、审计日志
+ * - **安全增强**：HTTPS支持、安全头、请求验证
  *
  * ## 业务规则
  *
  * ### 服务器生命周期管理
  * - 服务器启动前必须完成所有插件和中间件的注册
- * - 服务器停止时必须优雅关闭所有连接
- * - 服务器启动失败时必须清理已注册的组件
- * - 服务器重启时必须保持配置一致性
+ * - 服务器停止时必须优雅关闭所有连接和组件
+ * - 服务器启动失败时必须自动清理已注册的组件
+ * - 服务器重启时必须保持配置和状态的一致性
  *
  * ### 组件管理规则
- * - 插件按优先级顺序注册，优先级相同时按注册顺序
- * - 中间件按优先级顺序执行，支持路径和方法过滤
- * - 路由注册前必须验证路径和方法的唯一性
- * - 组件注册失败时必须回滚已注册的组件
+ * - 插件按优先级顺序注册，优先级相同时按注册顺序执行
+ * - 中间件按优先级顺序执行，支持路径和HTTP方法过滤
+ * - 路由注册前必须验证路径和方法的唯一性，防止冲突
+ * - 组件注册失败时必须回滚已注册的组件，确保系统一致性
  *
  * ### 健康检查规则
- * - 健康检查必须包含服务器状态和所有组件状态
- * - 任一组件不健康时，整体状态为degraded
- * - 服务器未启动时，整体状态为unhealthy
- * - 健康检查必须支持超时和重试机制
+ * - 健康检查必须包含服务器状态和所有注册组件的状态
+ * - 任一关键组件不健康时，整体状态标记为degraded
+ * - 服务器未启动或多个组件失败时，整体状态为unhealthy
+ * - 健康检查必须支持超时机制和重试策略
  *
  * ### 性能监控规则
- * - 性能指标必须实时收集和更新
- * - 指标收集不能影响正常请求处理性能
- * - 指标数据必须支持时间窗口聚合
- * - 指标数据必须支持多租户隔离
+ * - 性能指标必须实时收集和更新，不影响请求处理性能
+ * - 指标数据必须支持时间窗口聚合和历史数据分析
+ * - 指标收集必须支持多租户隔离和权限控制
+ * - 监控数据必须支持导出和集成外部监控系统
  *
- * @example
+ * ## 使用场景
+ *
+ * ### 🔧 **内部集成使用**（推荐）
  * ```typescript
+ * // 在EnterpriseFastifyAdapter内部使用
+ * const coreAdapter = new CoreFastifyAdapter(
+ *   enterpriseConfig,
+ *   loggerService
+ * );
+ * await coreAdapter.start(); // 启动企业级功能
+ * ```
+ *
+ * ### 🛠️ **独立使用场景**（高级用户）
+ * ```typescript
+ * // 独立使用，不依赖NestJS
  * const adapter = new CoreFastifyAdapter({
  *   server: {
  *     port: 3000,
- *     host: '0.0.0.0'
+ *     host: '0.0.0.0',
+ *     keepAliveTimeout: 60000,
+ *     headersTimeout: 61000
  *   },
  *   monitoring: {
  *     enableMetrics: true,
- *     enableHealthCheck: true
+ *     enableHealthCheck: true,
+ *     enablePerformanceMonitoring: true
+ *   },
+ *   plugins: [
+ *     { name: 'cors', enabled: true, priority: 1 }
+ *   ],
+ *   middleware: [
+ *     { name: 'tenant', enabled: true, priority: 1 }
+ *   ],
+ *   multiTenant: {
+ *     enabled: true,
+ *     tenantHeader: 'X-Tenant-ID'
  *   }
- * });
+ * }, loggerService);
  *
+ * // 注册企业级插件
+ * await adapter.registerPlugin(corsPlugin);
+ * await adapter.registerMiddleware(tenantMiddleware);
+ *
+ * // 启动服务器
  * await adapter.start();
+ *
+ * // 获取健康状态和性能指标
+ * const health = await adapter.getHealthStatus();
+ * const metrics = await adapter.getPerformanceMetrics();
  * ```
+ *
+ * ## 与EnterpriseFastifyAdapter的关系
+ *
+ * - **CoreFastifyAdapter**: 企业级功能的实际实现者和管理者
+ * - **EnterpriseFastifyAdapter**: NestJS集成接口，内部使用CoreFastifyAdapter
+ * - **协作模式**: EnterpriseFastifyAdapter负责NestJS集成，CoreFastifyAdapter负责企业级功能
  *
  * @since 1.0.0
  */
@@ -352,7 +417,7 @@ export class CoreFastifyAdapter implements IFastifyAdapter {
    */
   private async createFastifyInstance(): Promise<void> {
     const options = {
-      logger: this._config.logging,
+      logger: true, // 简化日志配置，避免prettyPrint问题
       keepAliveTimeout: this._config.server.keepAliveTimeout,
       headersTimeout: this._config.server.headersTimeout,
     } as FastifyServerOptions;

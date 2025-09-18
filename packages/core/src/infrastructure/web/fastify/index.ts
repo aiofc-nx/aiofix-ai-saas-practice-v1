@@ -15,10 +15,9 @@ export {
   CoreFastifyAdapter,
   FastifyAdapterError,
 } from './adapters/core-fastify.adapter';
+// 企业级适配器 - 完整替代NestJS官方适配器的企业级实现
 export { EnterpriseFastifyAdapter } from './adapters/enterprise-fastify.adapter';
 export type { IEnterpriseFastifyOptions } from './adapters/enterprise-fastify.adapter';
-export { SimpleEnterpriseFastifyAdapter } from './adapters/enterprise-fastify-simple.adapter';
-export type { ISimpleEnterpriseFastifyOptions } from './adapters/enterprise-fastify-simple.adapter';
 
 // 插件导出
 export type { CoreFastifyPlugin } from './plugins/core-fastify.plugin';

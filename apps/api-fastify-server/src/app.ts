@@ -20,7 +20,7 @@ import {
   DataSensitivity,
   EntityId,
   IFastifyConfiguration,
-  SimpleEnterpriseFastifyAdapter,
+  EnterpriseFastifyAdapter,
 } from '@aiofix/core';
 // 导入消息传递模块
 import {
@@ -272,7 +272,7 @@ class DemoController {
   }> {
     return {
       message: '🎉 正在使用我们的自定义企业级Fastify适配器！',
-      adapterType: 'SimpleEnterpriseFastifyAdapter',
+      adapterType: 'EnterpriseFastifyAdapter',
       isCustomAdapter: true,
       enterpriseFeatures: {
         healthCheck: true,
@@ -317,8 +317,8 @@ class DemoAppModule {}
  */
 async function bootstrap(): Promise<void> {
   try {
-    // 创建简化版企业级Fastify适配器（使用我们的自定义实现）
-    const fastifyAdapter = new SimpleEnterpriseFastifyAdapter({
+    // 创建企业级Fastify适配器（使用我们的自定义实现）
+    const fastifyAdapter = new EnterpriseFastifyAdapter({
       logger: true,
       enterprise: {
         enableHealthCheck: true,
@@ -358,7 +358,7 @@ async function bootstrap(): Promise<void> {
 
     // eslint-disable-next-line no-console
     console.log(
-      `🚀 企业级Fastify API服务器启动成功! (使用自定义SimpleEnterpriseFastifyAdapter)`,
+      `🚀 企业级Fastify API服务器启动成功! (使用自定义EnterpriseFastifyAdapter)`,
     );
     // eslint-disable-next-line no-console
     console.log(`📖 API文档: http://localhost:${port}/api/docs`);
