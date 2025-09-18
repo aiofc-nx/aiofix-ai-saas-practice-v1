@@ -27,7 +27,6 @@
  * @since 1.0.0
  */
 
-import { Observable } from 'rxjs';
 import type { EntityId } from '@aiofix/core';
 
 /**
@@ -209,7 +208,7 @@ export interface IMessageSendOptions {
 /**
  * 消息处理器接口
  */
-export interface IMessageHandler<T = any> {
+export interface IMessageHandler {
   /** 处理器名称 */
   readonly name: string;
 
@@ -222,7 +221,7 @@ export interface IMessageHandler<T = any> {
   /**
    * 处理消息
    */
-  handle(message: IMessage<T>): Promise<void>;
+  handle(message: IMessage): Promise<void>;
 
   /**
    * 检查是否可以处理指定消息
@@ -413,7 +412,7 @@ export interface IMessagingService {
    */
   send(
     topic: string,
-    payload: any,
+    payload: unknown,
     options?: IMessageSendOptions,
   ): Promise<void>;
 
@@ -422,7 +421,7 @@ export interface IMessagingService {
    */
   publish(
     eventType: string,
-    eventData: any,
+    eventData: unknown,
     options?: IMessageSendOptions,
   ): Promise<void>;
 
@@ -431,7 +430,7 @@ export interface IMessagingService {
    */
   subscribe(
     topic: string,
-    handler: (message: any) => Promise<void>,
+    handler: (message: unknown) => Promise<void>,
   ): Promise<string>;
 
   /**
@@ -442,12 +441,12 @@ export interface IMessagingService {
   /**
    * 请求响应模式
    */
-  request<T>(topic: string, payload: any, timeout?: number): Promise<T>;
+  request<T>(topic: string, payload: unknown, timeout?: number): Promise<T>;
 
   /**
    * 响应请求
    */
-  reply(message: IMessage, response: any): Promise<void>;
+  reply(message: IMessage, response: unknown): Promise<void>;
 }
 
 /**

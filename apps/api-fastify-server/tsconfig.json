@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"],
+  "references": [
+    { "path": "../../packages/core" },
+    { "path": "../../packages/logging" },
+    { "path": "../../packages/config" },
+    { "path": "../../packages/cache" },
+    { "path": "../../packages/messaging" },
+    { "path": "../../packages/tenant" }
+  ]
+}

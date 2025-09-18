@@ -5,14 +5,14 @@
  * @since 1.0.0
  */
 
-// 简化Web中间件
+// 简化Web中间件（向后兼容）
 export { SimpleWebMiddleware } from './middleware/simple-web-middleware';
 export type {
   ISimpleWebMiddlewareOptions,
   IRequestInfo,
 } from './middleware/simple-web-middleware';
 
-// 原有Fastify模块导出
+// 企业级Fastify集成
 export * from './fastify';
 
 // TODO: 实现其他Web框架集成
