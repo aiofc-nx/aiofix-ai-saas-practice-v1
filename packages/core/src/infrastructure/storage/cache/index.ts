@@ -5,28 +5,23 @@
  * @since 1.0.0
  */
 
-// 重新导出@aiofix/cache模块的核心功能
+// 重新导出@aiofix/cache模块的核心功能（基于当前可用的导出）
 export type {
   ICacheService,
-  CacheOptions,
-  CacheHealth,
-  CacheConfig,
+  ICacheOptions,
+  ICacheHealth,
+  ISimpleCacheConfig,
+  ISimpleCacheModuleOptions,
 } from '@aiofix/cache';
 
 export {
-  CacheModule,
-  RedisCacheService,
-  MemoryCacheService,
-  CacheManagerService,
-  CacheInvalidationService,
-  CacheWarmupService,
-  CacheKeyFactory,
-  CacheKeyDecorator,
-  CacheTTL,
-  CacheOptionsDecorator,
-  CacheEvict,
-  CacheEvictAll,
-  Cacheable,
-  CacheEvictable,
-  CacheInterceptor,
+  SimpleCacheManager,
+  SimpleCacheConfigService,
+  createSimpleCacheConfigService,
+  SimpleCacheModule,
+  InjectSimpleCacheManager,
+  InjectSimpleCacheConfig,
+  CacheIsolationStrategy,
+  createCacheIsolationStrategy,
+  TenantAwareCacheKeyBuilder,
 } from '@aiofix/cache';

@@ -211,9 +211,9 @@ export function ValidateTenantContext() {
   ) {
     const originalMethod = descriptor.value;
 
-    descriptor.value = function (...args: any[]) {
+    descriptor.value = async function (...args: any[]) {
       // 验证租户上下文
-      const validation = TenantContextManager.validateContext();
+      const validation = await TenantContextManager.validateContext();
       if (!validation.valid) {
         throw new Error(`租户上下文验证失败: ${validation.errors.join(', ')}`);
       }

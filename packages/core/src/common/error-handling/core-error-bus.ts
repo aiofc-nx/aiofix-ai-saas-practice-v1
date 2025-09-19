@@ -56,6 +56,7 @@ import { Injectable } from '@nestjs/common';
 import type { ILoggerService } from '@aiofix/logging';
 import { LogContext } from '@aiofix/logging';
 import { v4 as uuidv4 } from 'uuid';
+import type { CoreConfigService } from '../../infrastructure/config/core-config.service';
 import {
   IErrorBus,
   IErrorHandler,
@@ -76,7 +77,10 @@ import {
  */
 @Injectable()
 export class CoreErrorBus implements IErrorBus {
-  constructor(private readonly logger: ILoggerService) {}
+  constructor(
+    private readonly logger: ILoggerService,
+    private readonly configService?: CoreConfigService,
+  ) {}
   private readonly handlers = new Map<string, IErrorHandler>();
   private readonly classifiers = new Map<string, IErrorClassifier>();
   private readonly notifiers = new Map<string, IErrorNotifier>();
@@ -289,6 +293,64 @@ export class CoreErrorBus implements IErrorBus {
   }
 
   /**
+   * 获取错误处理配置
+   *
+   * @description 从配置服务获取错误处理配置
+   *
+   * @returns 错误处理配置
+   */
+  private async getErrorHandlingConfig(): Promise<{
+    enabled: boolean;
+    enableReporting: boolean;
+    retry: {
+      maxRetries: number;
+      retryDelay: number;
+      enableBackoff: boolean;
+    };
+  } | null> {
+    if (!this.configService) {
+      console.log('CoreErrorBus: 配置服务未设置，使用默认配置');
+      return {
+        enabled: true,
+        enableReporting: true,
+        retry: {
+          maxRetries: 3,
+          retryDelay: 1000,
+          enableBackoff: true,
+        },
+      };
+    }
+
+    try {
+      const config = await this.configService.getErrorHandlingConfig();
+      return {
+        enabled: config.enabled,
+        enableReporting: config.enableReporting,
+        retry: {
+          maxRetries: config.retry.maxRetries,
+          retryDelay: config.retry.retryDelay,
+          enableBackoff: config.retry.enableBackoff,
+        },
+      };
+    } catch (error) {
+      console.error('获取错误处理配置失败:', error);
+      return null;
+    }
+  }
+
+  /**
+   * 检查错误处理是否启用
+   *
+   * @description 基于配置检查错误处理功能是否启用
+   *
+   * @returns 是否启用错误处理
+   */
+  async isErrorHandlingEnabled(): Promise<boolean> {
+    const config = await this.getErrorHandlingConfig();
+    return config?.enabled ?? true;
+  }
+
+  /**
    * 启动错误总线
    */
   public async start(): Promise<void> {
@@ -296,6 +358,17 @@ export class CoreErrorBus implements IErrorBus {
       this.logger.warn('Error bus is already started');
       return;
     }
+
+    // 加载错误处理配置
+    const config = await this.getErrorHandlingConfig();
+
+    if (config && !config.enabled) {
+      console.log('错误处理功能已禁用，跳过启动');
+      this._isStarted = true;
+      return;
+    }
+
+    console.log('✅ CoreErrorBus配置已加载', config);
 
     this.logger.info('Starting error bus...', LogContext.SYSTEM);
 

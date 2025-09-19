@@ -1,594 +1,817 @@
 /**
- * @enum CacheType
- * @description 缓存类型枚举
+ * 统一缓存管理系统接口
+ *
+ * @description 定义企业级缓存管理系统的核心接口和类型
+ * 支持多租户、多级缓存、智能策略和事件驱动架构
+ *
+ * ## 业务规则
+ *
+ * ### 缓存隔离规则
+ * - 支持多种隔离级别：租户、组织、用户、完全隔离
+ * - 缓存键必须包含租户上下文信息
+ * - 跨租户访问被严格禁止
+ * - 支持租户级别的缓存清理和管理
+ *
+ * ### 缓存策略规则
+ * - 基于访问模式的智能策略选择
+ * - 支持多级缓存的协调和同步
+ * - 自适应的TTL和容量管理
+ * - 支持缓存预热和失效策略
+ *
+ * ### 性能监控规则
+ * - 所有缓存操作都必须记录性能指标
+ * - 支持实时监控和历史分析
+ * - 提供缓存健康检查和诊断
+ * - 集成告警和通知机制
+ *
+ * @since 1.0.0
  */
-export enum CacheType {
+
+// 导入并重新导出Core模块的正式接口
+import type { ITenantContextData } from '@aiofix/core';
+
+export type TenantContext = ITenantContextData;
+
+/**
+ * 缓存隔离级别枚举
+ *
+ * @description 定义不同级别的缓存隔离策略
+ */
+export enum CacheIsolationLevel {
+  /** 无隔离 - 全局共享缓存 */
+  NONE = 'none',
+  /** 租户级隔离 - 按租户隔离缓存 */
+  TENANT = 'tenant',
+  /** 组织级隔离 - 按组织隔离缓存 */
+  ORGANIZATION = 'organization',
+  /** 用户级隔离 - 按用户隔离缓存 */
+  USER = 'user',
+  /** 完全隔离 - 多维度隔离 */
+  FULL = 'full',
+}
+
+/**
+ * 缓存策略枚举
+ *
+ * @description 定义缓存的替换和管理策略
+ */
+export enum CacheStrategy {
+  /** 最近最少使用 */
+  LRU = 'lru',
+  /** 最少使用频率 */
+  LFU = 'lfu',
+  /** 先进先出 */
+  FIFO = 'fifo',
+  /** 基于时间过期 */
+  TTL = 'ttl',
+  /** 自适应策略 */
+  ADAPTIVE = 'adaptive',
+}
+
+/**
+ * 缓存层类型枚举
+ *
+ * @description 定义不同的缓存存储层
+ */
+export enum CacheLayerType {
+  /** 内存缓存 */
   MEMORY = 'memory',
+  /** Redis缓存 */
   REDIS = 'redis',
+  /** 分布式缓存 */
+  DISTRIBUTED = 'distributed',
+  /** 混合缓存 */
   HYBRID = 'hybrid',
 }
 
 /**
- * @enum CacheStrategy
- * @description 缓存策略枚举
+ * 数据敏感性级别枚举
+ *
+ * @description 定义缓存数据的敏感性级别，影响加密和访问控制
  */
-export enum CacheStrategy {
-  LRU = 'lru', // 最近最少使用
-  LFU = 'lfu', // 最少使用频率
-  FIFO = 'fifo', // 先进先出
-  TTL = 'ttl', // 基于时间过期
+export enum DataSensitivity {
+  /** 公开数据 */
+  PUBLIC = 'public',
+  /** 内部数据 */
+  INTERNAL = 'internal',
+  /** 敏感数据 */
+  SENSITIVE = 'sensitive',
+  /** 高度敏感数据 */
+  HIGH = 'high',
+  /** 机密数据 */
+  CONFIDENTIAL = 'confidential',
 }
 
 /**
- * @interface CacheOptions
- * @description 缓存选项接口
+ * 缓存访问模式枚举
+ *
+ * @description 定义缓存的访问模式，用于智能策略选择
  */
-export interface CacheOptions {
-  /** 缓存类型 */
-  type: CacheType;
-  /** 缓存策略 */
-  strategy: CacheStrategy;
-  /** 默认过期时间（毫秒） */
+export enum CacheAccessPattern {
+  /** 频繁读取 */
+  FREQUENT_READ = 'frequent_read',
+  /** 偶尔读取 */
+  INFREQUENT_READ = 'infrequent_read',
+  /** 写入密集 */
+  WRITE_HEAVY = 'write_heavy',
+  /** 读写平衡 */
+  BALANCED = 'balanced',
+  /** 一次性写入 */
+  WRITE_ONCE = 'write_once',
+}
+
+/**
+ * 缓存模块配置接口
+ *
+ * @description 缓存模块的完整配置，集成到统一配置管理系统
+ */
+export interface ICacheModuleConfig {
+  /** 是否启用缓存模块 */
+  enabled: boolean;
+
+  /** 全局配置 */
+  global: {
+    /** 默认TTL（毫秒） */
+    defaultTTL: number;
+    /** 最大缓存大小 */
+    maxSize: number;
+    /** 是否启用压缩 */
+    enableCompression: boolean;
+    /** 是否启用加密 */
+    enableEncryption: boolean;
+    /** 是否启用统计 */
+    enableStats: boolean;
+    /** 是否启用事件 */
+    enableEvents: boolean;
+    /** 缓存隔离级别 */
+    isolationLevel: CacheIsolationLevel;
+    /** 默认缓存策略 */
+    defaultStrategy: CacheStrategy;
+  };
+
+  /** Redis配置 */
+  redis: {
+    /** Redis主机地址 */
+    host: string;
+    /** Redis端口 */
+    port: number;
+    /** Redis密码 */
+    password?: string;
+    /** 数据库索引 */
+    db: number;
+    /** 连接超时（毫秒） */
+    connectTimeout: number;
+    /** 命令超时（毫秒） */
+    commandTimeout: number;
+    /** 重试次数 */
+    retries: number;
+    /** 重试延迟（毫秒） */
+    retryDelay: number;
+    /** 集群配置 */
+    cluster?: {
+      enabled: boolean;
+      nodes: Array<{ host: string; port: number }>;
+    };
+    /** 哨兵配置 */
+    sentinel?: {
+      enabled: boolean;
+      sentinels: Array<{ host: string; port: number }>;
+      name: string;
+    };
+  };
+
+  /** 内存缓存配置 */
+  memory: {
+    /** 最大缓存大小 */
+    maxSize: number;
+    /** 缓存策略 */
+    strategy: CacheStrategy;
+    /** 清理间隔（毫秒） */
+    cleanupInterval: number;
+    /** 是否启用压缩 */
+    enableCompression: boolean;
+  };
+
+  /** 缓存层配置 */
+  layers: Record<string, ICacheLayerConfig>;
+
+  /** 监控配置 */
+  monitoring: {
+    /** 是否启用监控 */
+    enabled: boolean;
+    /** 指标收集间隔（毫秒） */
+    metricsInterval: number;
+    /** 是否启用追踪 */
+    enableTracing: boolean;
+    /** 是否启用告警 */
+    enableAlerts: boolean;
+  };
+
+  /** 预热配置 */
+  warmup: {
+    /** 是否启用预热 */
+    enabled: boolean;
+    /** 预热策略列表 */
+    strategies: string[];
+    /** 预热调度表达式 */
+    schedule: string;
+  };
+}
+
+/**
+ * 缓存层配置接口
+ *
+ * @description 单个缓存层的配置选项
+ */
+export interface ICacheLayerConfig {
+  /** 缓存层名称 */
+  name: string;
+  /** 缓存层类型 */
+  type: CacheLayerType;
+  /** 是否启用 */
+  enabled: boolean;
+  /** 优先级（数字越小优先级越高） */
+  priority: number;
+  /** 是否只读 */
+  readOnly: boolean;
+  /** 缓存选项 */
+  options: ICacheOptions;
+}
+
+/**
+ * 缓存选项接口
+ *
+ * @description 通用的缓存操作选项
+ */
+export interface ICacheOptions {
+  /** TTL（毫秒） */
   ttl?: number;
-  /** 最大缓存项数量 */
-  maxSize?: number;
-  /** 是否启用压缩 */
+  /** 是否压缩 */
   compress?: boolean;
-  /** 是否启用加密 */
+  /** 是否加密 */
   encrypt?: boolean;
-  /** 重试次数 */
-  retries?: number;
-  /** 重试延迟（毫秒） */
-  retryDelay?: number;
-  /** 连接超时（毫秒） */
-  timeout?: number;
+  /** 数据敏感性级别 */
+  sensitivity?: DataSensitivity;
+  /** 缓存策略 */
+  strategy?: CacheStrategy;
+  /** 自定义元数据 */
+  metadata?: Record<string, unknown>;
 }
 
 /**
- * @interface CacheKey
- * @description 缓存键接口
+ * 缓存获取选项接口
  */
-export interface CacheKey {
-  /** 键名 */
+export interface ICacheGetOptions extends ICacheOptions {
+  /** 是否刷新缓存 */
+  refresh?: boolean;
+  /** 回退值 */
+  fallback?: unknown;
+}
+
+/**
+ * 缓存设置选项接口
+ */
+export interface ICacheSetOptions extends ICacheOptions {
+  /** 是否覆盖现有值 */
+  overwrite?: boolean;
+  /** 条件设置 */
+  condition?: (existingValue: unknown) => boolean;
+}
+
+/**
+ * 缓存失效选项接口
+ */
+export interface ICacheEvictOptions {
+  /** 是否级联失效 */
+  cascade?: boolean;
+  /** 失效模式 */
+  mode?: 'exact' | 'pattern' | 'prefix';
+  /** 批量大小 */
+  batchSize?: number;
+}
+
+/**
+ * 缓存上下文接口
+ *
+ * @description 缓存操作的上下文信息
+ */
+export interface ICacheContext {
+  /** 租户上下文 */
+  tenantContext?: TenantContext;
+  /** 操作类型 */
+  operation:
+    | 'get'
+    | 'set'
+    | 'delete'
+    | 'clear'
+    | 'exists'
+    | 'batch'
+    | 'warmup'
+    | 'cleanup'
+    | 'initialize'
+    | 'destroy';
+  /** 缓存键 */
   key: string;
-  /** 命名空间 */
-  namespace?: string;
-  /** 版本号 */
-  version?: string;
-  /** 租户ID */
-  tenantId?: string;
-  /** 用户ID */
-  userId?: string;
-  /** 标签 */
-  tags?: string[];
-}
-
-/**
- * @interface CacheValue<T>
- * @description 缓存值接口
- */
-export interface CacheValue<T = unknown> {
-  /** 实际值 */
-  value: T;
-  /** 创建时间 */
-  createdAt: number;
-  /** 过期时间 */
-  expiresAt?: number;
-  /** 访问次数 */
-  accessCount: number;
-  /** 最后访问时间 */
-  lastAccessed: number;
-  /** 版本号 */
-  version?: string;
-  /** 标签 */
-  tags?: string[];
+  /** 开始时间 */
+  startTime: Date;
+  /** 时间戳 */
+  timestamp: Date;
   /** 元数据 */
   metadata?: Record<string, unknown>;
 }
 
 /**
- * @interface CacheEntry<T>
- * @description 缓存条目接口
+ * 缓存服务接口
+ *
+ * @description 定义缓存服务的基本操作
  */
-export interface CacheEntry<T = unknown> {
-  /** 缓存键 */
-  key: CacheKey;
-  /** 缓存值 */
-  value: CacheValue<T>;
-  /** 大小（字节） */
-  size: number;
+export interface ICacheService {
+  /**
+   * 获取缓存值
+   *
+   * @param key - 缓存键
+   * @param options - 获取选项
+   * @returns 缓存值或null
+   */
+  get<T>(key: string, options?: ICacheGetOptions): Promise<T | null>;
+
+  /**
+   * 设置缓存值
+   *
+   * @param key - 缓存键
+   * @param value - 缓存值
+   * @param options - 设置选项
+   * @returns 是否设置成功
+   */
+  set<T>(key: string, value: T, options?: ICacheSetOptions): Promise<boolean>;
+
+  /**
+   * 删除缓存值
+   *
+   * @param key - 缓存键
+   * @returns 是否删除成功
+   */
+  delete(key: string): Promise<boolean>;
+
+  /**
+   * 检查缓存是否存在
+   *
+   * @param key - 缓存键
+   * @returns 是否存在
+   */
+  exists(key: string): Promise<boolean>;
+
+  /**
+   * 清空所有缓存
+   *
+   * @returns 清空的数量
+   */
+  clear(): Promise<number>;
+
+  /**
+   * 获取缓存统计信息
+   *
+   * @returns 统计信息
+   */
+  getStats(): Promise<ICacheStats>;
+
+  /**
+   * 获取缓存健康状态
+   *
+   * @returns 健康状态
+   */
+  getHealth(): Promise<ICacheHealth>;
 }
 
 /**
- * @interface CacheStats
- * @description 缓存统计接口
+ * 多租户感知缓存服务接口
+ *
+ * @description 扩展基础缓存服务，添加多租户支持
  */
-export interface CacheStats {
-  /** 总条目数 */
-  totalEntries: number;
+export interface ITenantAwareCacheService extends ICacheService {
+  /**
+   * 获取租户特定的缓存值
+   *
+   * @param key - 缓存键
+   * @param tenantContext - 租户上下文
+   * @param options - 获取选项
+   * @returns 缓存值或null
+   */
+  getTenantCache<T>(
+    key: string,
+    tenantContext: TenantContext,
+    options?: ICacheGetOptions,
+  ): Promise<T | null>;
+
+  /**
+   * 设置租户特定的缓存值
+   *
+   * @param key - 缓存键
+   * @param value - 缓存值
+   * @param tenantContext - 租户上下文
+   * @param options - 设置选项
+   * @returns 是否设置成功
+   */
+  setTenantCache<T>(
+    key: string,
+    value: T,
+    tenantContext: TenantContext,
+    options?: ICacheSetOptions,
+  ): Promise<boolean>;
+
+  /**
+   * 清理租户缓存
+   *
+   * @param tenantId - 租户ID
+   * @returns 清理结果
+   */
+  cleanupTenantCache(tenantId: string): Promise<ICacheCleanupResult>;
+
+  /**
+   * 获取租户缓存统计
+   *
+   * @param tenantId - 租户ID
+   * @returns 租户缓存统计
+   */
+  getTenantStats(tenantId: string): Promise<ICacheTenantStats>;
+}
+
+/**
+ * 缓存管理器接口
+ *
+ * @description 统一缓存管理器的核心接口
+ */
+export interface IUnifiedCacheManager extends ITenantAwareCacheService {
+  /**
+   * 初始化缓存管理器
+   */
+  initialize(): Promise<void>;
+
+  /**
+   * 销毁缓存管理器
+   */
+  destroy(): Promise<void>;
+
+  /**
+   * 获取所有缓存层
+   *
+   * @returns 缓存层列表
+   */
+  getAllLayers(): Promise<ICacheLayer[]>;
+
+  /**
+   * 添加缓存层
+   *
+   * @param layer - 缓存层配置
+   */
+  addLayer(layer: ICacheLayerConfig): Promise<void>;
+
+  /**
+   * 移除缓存层
+   *
+   * @param layerName - 缓存层名称
+   */
+  removeLayer(layerName: string): Promise<void>;
+
+  /**
+   * 批量操作
+   *
+   * @param operations - 操作列表
+   * @returns 操作结果
+   */
+  batch(operations: ICacheOperation[]): Promise<ICacheBatchResult>;
+
+  /**
+   * 缓存预热
+   *
+   * @param items - 预热项目
+   * @returns 预热结果
+   */
+  warmup(items: ICacheWarmupItem[]): Promise<ICacheWarmupResult>;
+}
+
+/**
+ * 缓存层接口
+ *
+ * @description 单个缓存层的抽象接口
+ */
+export interface ICacheLayer {
+  /** 缓存层名称 */
+  readonly name: string;
+  /** 缓存层类型 */
+  readonly type: CacheLayerType;
+  /** 是否启用 */
+  enabled: boolean;
+  /** 优先级 */
+  priority: number;
+  /** 是否只读 */
+  readOnly: boolean;
+  /** 缓存服务实例 */
+  service: ICacheService;
+  /** 配置选项 */
+  options: ICacheOptions;
+}
+
+/**
+ * 缓存操作接口
+ *
+ * @description 定义批量操作的单个操作
+ */
+export interface ICacheOperation {
+  /** 操作类型 */
+  type: 'get' | 'set' | 'delete' | 'exists';
+  /** 缓存键 */
+  key: string;
+  /** 缓存值（仅用于set操作） */
+  value?: unknown;
+  /** 操作选项 */
+  options?: ICacheOptions;
+}
+
+/**
+ * 缓存批量操作结果接口
+ */
+export interface ICacheBatchResult {
+  /** 总操作数 */
+  total: number;
+  /** 成功操作数 */
+  successful: number;
+  /** 失败操作数 */
+  failed: number;
+  /** 详细结果 */
+  results: Array<{
+    operation: ICacheOperation;
+    success: boolean;
+    result?: unknown;
+    error?: Error;
+  }>;
+}
+
+/**
+ * 缓存预热项目接口
+ */
+export interface ICacheWarmupItem {
+  /** 缓存键 */
+  key: string;
+  /** 预热函数 */
+  loader: () => Promise<unknown>;
+  /** 预热选项 */
+  options?: ICacheOptions;
+  /** 优先级 */
+  priority?: number;
+}
+
+/**
+ * 缓存预热结果接口
+ */
+export interface ICacheWarmupResult {
+  /** 总预热项目数 */
+  total: number;
+  /** 成功预热数 */
+  successful: number;
+  /** 失败预热数 */
+  failed: number;
+  /** 预热耗时（毫秒） */
+  duration: number;
+  /** 详细结果 */
+  details: Array<{
+    key: string;
+    success: boolean;
+    duration: number;
+    error?: Error;
+  }>;
+}
+
+/**
+ * 缓存统计信息接口
+ */
+export interface ICacheStats {
+  /** 总操作数 */
+  totalOperations: number;
   /** 命中次数 */
   hits: number;
   /** 未命中次数 */
   misses: number;
   /** 命中率 */
   hitRate: number;
-  /** 总大小（字节） */
-  totalSize: number;
-  /** 平均大小（字节） */
-  averageSize: number;
-  /** 过期条目数 */
-  expiredEntries: number;
-  /** 驱逐条目数 */
-  evictedEntries: number;
-  /** 最后重置时间 */
-  lastReset: number;
-}
-
-/**
- * @interface CacheHealth
- * @description 缓存健康状态接口
- */
-export interface CacheHealth {
-  /** 是否健康 */
-  healthy: boolean;
-  /** 连接状态 */
-  connected: boolean;
-  /** 响应时间（毫秒） */
-  responseTime: number;
-  /** 错误信息 */
-  error?: string;
-  /** 最后检查时间 */
-  lastCheck: number;
-}
-
-/**
- * @interface ICacheService
- * @description 缓存服务接口
- */
-export interface ICacheService {
-  /**
-   * @method get
-   * @description 获取缓存值
-   * @param {CacheKey} key 缓存键
-   * @returns {Promise<T | null>} 缓存值或null
-   */
-  get<T = unknown>(key: CacheKey): Promise<T | null>;
-
-  /**
-   * @method set
-   * @description 设置缓存值
-   * @param {CacheKey} key 缓存键
-   * @param {T} value 缓存值
-   * @param {Partial<CacheOptions>} options 缓存选项
-   * @returns {Promise<boolean>} 是否成功
-   */
-  set<T = unknown>(
-    key: CacheKey,
-    value: T,
-    options?: Partial<CacheOptions>,
-  ): Promise<boolean>;
-
-  /**
-   * @method delete
-   * @description 删除缓存值
-   * @param {CacheKey} key 缓存键
-   * @returns {Promise<boolean>} 是否成功
-   */
-  delete(key: CacheKey): Promise<boolean>;
-
-  /**
-   * @method exists
-   * @description 检查缓存键是否存在
-   * @param {CacheKey} key 缓存键
-   * @returns {Promise<boolean>} 是否存在
-   */
-  exists(key: CacheKey): Promise<boolean>;
-
-  /**
-   * @method clear
-   * @description 清空缓存
-   * @param {string} namespace 命名空间（可选）
-   * @returns {Promise<boolean>} 是否成功
-   */
-  clear(namespace?: string): Promise<boolean>;
-
-  /**
-   * @method getStats
-   * @description 获取缓存统计
-   * @returns {Promise<CacheStats>} 缓存统计
-   */
-  getStats(): Promise<CacheStats>;
-
-  /**
-   * @method getHealth
-   * @description 获取缓存健康状态
-   * @returns {Promise<CacheHealth>} 缓存健康状态
-   */
-  getHealth(): Promise<CacheHealth>;
-
-  /**
-   * @method resetStats
-   * @description 重置缓存统计
-   * @returns {Promise<void>}
-   */
-  resetStats(): Promise<void>;
-}
-
-/**
- * @interface ICacheManager
- * @description 缓存管理器接口
- */
-export interface ICacheManager {
-  /**
-   * @method getCache
-   * @description 获取缓存服务实例
-   * @param {CacheType} type 缓存类型
-   * @returns {ICacheService} 缓存服务实例
-   */
-  getCache(type: CacheType): ICacheService;
-
-  /**
-   * @method setDefaultCache
-   * @description 设置默认缓存类型
-   * @param {CacheType} type 缓存类型
-   * @returns {void}
-   */
-  setDefaultCache(type: CacheType): void;
-
-  /**
-   * @method getDefaultCache
-   * @description 获取默认缓存服务
-   * @returns {ICacheService} 默认缓存服务
-   */
-  getDefaultCache(): ICacheService;
-
-  /**
-   * @method registerCache
-   * @description 注册缓存服务
-   * @param {CacheType} type 缓存类型
-   * @param {ICacheService} service 缓存服务
-   * @returns {void}
-   */
-  registerCache(type: CacheType, service: ICacheService): void;
-
-  /**
-   * @method unregisterCache
-   * @description 注销缓存服务
-   * @param {CacheType} type 缓存类型
-   * @returns {boolean} 是否成功
-   */
-  unregisterCache(type: CacheType): boolean;
-
-  /**
-   * @method getAllCaches
-   * @description 获取所有缓存服务
-   * @returns {Map<CacheType, ICacheService>} 缓存服务映射
-   */
-  getAllCaches(): Map<CacheType, ICacheService>;
-
-  /**
-   * @method getStats
-   * @description 获取所有缓存统计
-   * @returns {Promise<Map<CacheType, CacheStats>>} 缓存统计映射
-   */
-  getStats(): Promise<Map<CacheType, CacheStats>>;
-
-  /**
-   * @method getHealth
-   * @description 获取所有缓存健康状态
-   * @returns {Promise<Map<CacheType, CacheHealth>>} 缓存健康状态映射
-   */
-  getHealth(): Promise<Map<CacheType, CacheHealth>>;
-}
-
-/**
- * @interface ICacheKeyFactory
- * @description 缓存键工厂接口
- */
-export interface ICacheKeyFactory {
-  /**
-   * @method create
-   * @description 创建缓存键
-   * @param {string} key 基础键名
-   * @param {Partial<CacheKey>} options 键选项
-   * @returns {CacheKey} 缓存键
-   */
-  create(key: string, options?: Partial<CacheKey>): CacheKey;
-
-  /**
-   * @method createNamespace
-   * @description 创建命名空间键
-   * @param {string} namespace 命名空间
-   * @param {string} key 键名
-   * @param {Partial<CacheKey>} options 键选项
-   * @returns {CacheKey} 缓存键
-   */
-  createNamespace(
-    namespace: string,
-    key: string,
-    options?: Partial<CacheKey>,
-  ): CacheKey;
-
-  /**
-   * @method createTenant
-   * @description 创建租户键
-   * @param {string} tenantId 租户ID
-   * @param {string} key 键名
-   * @param {Partial<CacheKey>} options 键选项
-   * @returns {CacheKey} 缓存键
-   */
-  createTenant(
-    tenantId: string,
-    key: string,
-    options?: Partial<CacheKey>,
-  ): CacheKey;
-
-  /**
-   * @method createUser
-   * @description 创建用户键
-   * @param {string} userId 用户ID
-   * @param {string} key 键名
-   * @param {Partial<CacheKey>} options 键选项
-   * @returns {CacheKey} 缓存键
-   */
-  createUser(
-    userId: string,
-    key: string,
-    options?: Partial<CacheKey>,
-  ): CacheKey;
-
-  /**
-   * @method createTagged
-   * @description 创建带标签的键
-   * @param {string} key 键名
-   * @param {string[]} tags 标签数组
-   * @param {Partial<CacheKey>} options 键选项
-   * @returns {CacheKey} 缓存键
-   */
-  createTagged(
-    key: string,
-    tags: string[],
-    options?: Partial<CacheKey>,
-  ): CacheKey;
-
-  /**
-   * @method toString
-   * @description 将缓存键转换为字符串
-   * @param {CacheKey} cacheKey 缓存键
-   * @returns {string} 字符串形式的键
-   */
-  toString(cacheKey: CacheKey): string;
-
-  /**
-   * @method parse
-   * @description 解析字符串为缓存键
-   * @param {string} keyString 键字符串
-   * @returns {CacheKey} 缓存键
-   */
-  parse(keyString: string): CacheKey;
-}
-
-/**
- * @interface ICacheInvalidationService
- * @description 缓存失效服务接口
- */
-export interface ICacheInvalidationService {
-  /**
-   * @method invalidateByKey
-   * @description 根据键失效缓存
-   * @param {CacheKey} key 缓存键
-   * @returns {Promise<boolean>} 是否成功
-   */
-  invalidateByKey(key: CacheKey): Promise<boolean>;
-
-  /**
-   * @method invalidateByNamespace
-   * @description 根据命名空间失效缓存
-   * @param {string} namespace 命名空间
-   * @returns {Promise<number>} 失效的条目数
-   */
-  invalidateByNamespace(namespace: string): Promise<number>;
-
-  /**
-   * @method invalidateByTenant
-   * @description 根据租户失效缓存
-   * @param {string} tenantId 租户ID
-   * @returns {Promise<number>} 失效的条目数
-   */
-  invalidateByTenant(tenantId: string): Promise<number>;
-
-  /**
-   * @method invalidateByUser
-   * @description 根据用户失效缓存
-   * @param {string} userId 用户ID
-   * @returns {Promise<number>} 失效的条目数
-   */
-  invalidateByUser(userId: string): Promise<number>;
-
-  /**
-   * @method invalidateByTags
-   * @description 根据标签失效缓存
-   * @param {string[]} tags 标签数组
-   * @returns {Promise<number>} 失效的条目数
-   */
-  invalidateByTags(tags: string[]): Promise<number>;
-
-  /**
-   * @method invalidateByPattern
-   * @description 根据模式失效缓存
-   * @param {string} pattern 模式字符串
-   * @returns {Promise<number>} 失效的条目数
-   */
-  invalidateByPattern(pattern: string): Promise<number>;
-
-  /**
-   * @method scheduleInvalidation
-   * @description 计划失效缓存
-   * @param {CacheKey} key 缓存键
-   * @param {number} delay 延迟时间（毫秒）
-   * @returns {Promise<string>} 计划ID
-   */
-  scheduleInvalidation(key: CacheKey, delay: number): Promise<string>;
-
-  /**
-   * @method cancelScheduledInvalidation
-   * @description 取消计划失效
-   * @param {string} scheduleId 计划ID
-   * @returns {Promise<boolean>} 是否成功
-   */
-  cancelScheduledInvalidation(scheduleId: string): Promise<boolean>;
-}
-
-/**
- * @interface RedisConfig
- * @description Redis配置接口
- */
-export interface RedisConfig {
-  /** Redis主机地址 */
-  host: string;
-  /** Redis端口 */
-  port: number;
-  /** Redis密码 */
-  password?: string;
-  /** 数据库索引 */
-  db?: number;
-  /** 连接超时时间（毫秒） */
-  connectTimeout?: number;
-  /** 命令超时时间（毫秒） */
-  commandTimeout?: number;
-  /** 重试次数 */
-  retries?: number;
-  /** 重试延迟（毫秒） */
-  retryDelay?: number;
-  /** 是否启用集群模式 */
-  cluster?: boolean;
-  /** 集群节点 */
-  nodes?: Array<{ host: string; port: number }>;
-  /** 是否启用哨兵模式 */
-  sentinel?: boolean;
-  /** 哨兵配置 */
-  sentinels?: Array<{ host: string; port: number }>;
-  /** 主节点名称 */
-  name?: string;
-}
-
-/**
- * @interface MemoryCacheConfig
- * @description 内存缓存配置接口
- */
-export interface MemoryCacheConfig {
-  /** 默认过期时间（毫秒） */
-  defaultTtl?: number;
-  /** 最大缓存项数量 */
-  maxSize?: number;
-  /** 默认缓存策略 */
-  defaultStrategy?: CacheStrategy;
-  /** 清理间隔（毫秒） */
-  cleanupInterval?: number;
-  /** 是否启用压缩 */
-  enableCompression?: boolean;
-  /** 是否启用加密 */
-  enableEncryption?: boolean;
-}
-
-/**
- * @interface CacheManagerConfig
- * @description 缓存管理器配置接口
- */
-export interface CacheManagerConfig {
-  /** 默认缓存选项 */
-  defaultOptions?: CacheOptions;
-  /** 默认缓存策略 */
-  defaultStrategy?: CacheStrategy;
-  /** 是否启用缓存 */
-  enabled?: boolean;
-  /** 缓存层配置 */
-  layers?: CacheLayerConfig[];
-  /** 监控间隔（毫秒） */
-  monitoringInterval?: number;
-  /** 自动清理间隔（毫秒） */
-  cleanupInterval?: number;
+  /** 平均响应时间（毫秒） */
+  averageResponseTime: number;
+  /** 错误次数 */
+  errors: number;
+  /** 错误率 */
+  errorRate: number;
+  /** 当前缓存项数量 */
+  currentSize: number;
   /** 最大缓存大小 */
-  maxSize?: number;
-  /** 是否启用统计 */
-  enableStats?: boolean;
-  /** 是否启用事件 */
-  enableEvents?: boolean;
+  maxSize: number;
+  /** 内存使用量（字节） */
+  memoryUsage: number;
+  /** 最后更新时间 */
+  lastUpdated: Date;
 }
 
 /**
- * @interface CacheLayerConfig
- * @description 缓存层配置接口
+ * 租户缓存统计接口
  */
-export interface CacheLayerConfig {
-  /** 缓存层名称 */
-  name: string;
-  /** 缓存层优先级（数字越小优先级越高） */
-  priority: number;
-  /** 缓存服务实例 */
-  service: ICacheService | null;
-  /** 缓存层选项 */
-  options?: CacheOptions;
-  /** 是否启用 */
-  enabled?: boolean;
-  /** 是否只读 */
-  readOnly?: boolean;
-  /** 是否作为后备缓存 */
-  fallback?: boolean;
+export interface ICacheTenantStats extends ICacheStats {
+  /** 租户ID */
+  tenantId: string;
+  /** 租户名称 */
+  tenantName?: string;
+  /** 租户特定的键数量 */
+  tenantKeyCount: number;
+  /** 租户内存使用量 */
+  tenantMemoryUsage: number;
 }
 
 /**
- * @interface CacheInvalidationConfig
- * @description 缓存失效服务配置接口
+ * 缓存健康状态接口
  */
-export interface CacheInvalidationConfig {
-  /** 是否启用自动失效 */
-  enabled?: boolean;
-  /** 默认失效策略 */
-  defaultStrategy?: string;
-  /** 批量失效大小 */
-  batchSize?: number;
-  /** 并发失效数 */
-  concurrency?: number;
-  /** 超时时间（毫秒） */
-  timeout?: number;
-  /** 重试次数 */
-  retries?: number;
-  /** 重试延迟（毫秒） */
-  retryDelay?: number;
-  /** 是否启用统计 */
-  enableStats?: boolean;
-  /** 是否启用事件 */
-  enableEvents?: boolean;
-  /** 监控间隔（毫秒） */
-  monitoringInterval?: number;
+export interface ICacheHealth {
+  /** 整体健康状态 */
+  overall: 'healthy' | 'degraded' | 'unhealthy';
+  /** 各层健康状态 */
+  layers: Array<{
+    name: string;
+    type: CacheLayerType;
+    status: 'healthy' | 'degraded' | 'unhealthy';
+    latency: number;
+    errorRate: number;
+    message?: string;
+  }>;
+  /** 连接状态 */
+  connections: Array<{
+    name: string;
+    connected: boolean;
+    latency: number;
+    lastCheck: Date;
+  }>;
+  /** 建议 */
+  recommendations: string[];
+  /** 检查时间 */
+  checkedAt: Date;
 }
 
 /**
- * @interface InvalidationResult
- * @description 缓存失效结果接口，定义失效操作的结果信息。
+ * 缓存清理结果接口
  */
-export interface InvalidationResult {
-  /** 失效的键数量 */
-  invalidatedKeys: number;
-  /** 失效的命名空间数量 */
-  invalidatedNamespaces: number;
-  /** 失效的标签数量 */
-  invalidatedTags: number;
-  /** 失效的键列表 */
-  keys: string[];
-  /** 失效的命名空间列表 */
-  namespaces: string[];
-  /** 失效的标签列表 */
-  tags: string[];
-  /** 失效时间 */
-  invalidatedAt: Date;
-  /** 执行时间（毫秒） */
-  executionTime: number;
-  /** 是否成功 */
-  success: boolean;
-  /** 错误信息 */
-  error?: string;
-  /** 元数据 */
-  metadata?: Record<string, unknown>;
+export interface ICacheCleanupResult {
+  /** 总键数 */
+  totalKeys: number;
+  /** 删除的键数 */
+  deletedKeys: number;
+  /** 失败的键数 */
+  failedKeys: number;
+  /** 清理耗时（毫秒） */
+  duration: number;
+  /** 错误列表 */
+  errors: Error[];
+}
+
+/**
+ * 缓存隔离策略接口
+ *
+ * @description 定义缓存隔离的具体实现策略
+ */
+export interface ICacheIsolationStrategy {
+  /**
+   * 生成隔离的缓存键
+   *
+   * @param key - 原始缓存键
+   * @param context - 租户上下文
+   * @returns 隔离后的缓存键
+   */
+  isolateKey(key: string, context: TenantContext): string;
+
+  /**
+   * 验证缓存访问权限
+   *
+   * @param key - 缓存键
+   * @param context - 租户上下文
+   * @returns 是否有访问权限
+   */
+  validateAccess(key: string, context: TenantContext): Promise<boolean>;
+
+  /**
+   * 清理租户相关缓存
+   *
+   * @param tenantId - 租户ID
+   * @returns 清理结果
+   */
+  cleanupTenantCache(tenantId: string): Promise<ICacheCleanupResult>;
+
+  /**
+   * 提取缓存键中的租户信息
+   *
+   * @param key - 缓存键
+   * @returns 租户信息
+   */
+  extractTenantInfo(key: string): {
+    tenantId?: string;
+    organizationId?: string;
+    userId?: string;
+  };
+}
+
+/**
+ * 缓存策略决策接口
+ *
+ * @description 智能缓存策略的决策结果
+ */
+export interface ICacheStrategyDecision {
+  /** 推荐的缓存策略 */
+  strategy: CacheStrategy;
+  /** 推荐的TTL */
+  ttl: number;
+  /** 推荐的缓存层 */
+  layers: string[];
+  /** 决策原因 */
+  reason: string;
+  /** 置信度（0-1） */
+  confidence: number;
+}
+
+/**
+ * 访问模式分析结果接口
+ */
+export interface IAccessPattern {
+  /** 模式类型 */
+  type: CacheAccessPattern;
+  /** 访问频率（次/秒） */
+  frequency: number;
+  /** 平均访问间隔（毫秒） */
+  avgInterval: number;
+  /** 读写比例 */
+  readWriteRatio: number;
+  /** 数据大小（字节） */
+  avgDataSize: number;
+  /** 模式置信度 */
+  confidence: number;
+}
+
+/**
+ * 缓存错误基类
+ *
+ * @description 所有缓存相关错误的基类
+ */
+export class CacheError extends Error {
+  public readonly code: string;
+  public readonly timestamp: Date;
+
+  constructor(
+    message: string,
+    public readonly operation: string,
+    public readonly context: ICacheContext,
+    code?: string,
+  ) {
+    super(message);
+    this.name = 'CacheError';
+    this.code = code || 'CACHE_ERROR';
+    this.timestamp = new Date();
+  }
+}
+
+/**
+ * 缓存连接错误
+ */
+export class CacheConnectionError extends CacheError {
+  constructor(message: string, context: ICacheContext) {
+    super(message, 'connection', context, 'CACHE_CONNECTION_ERROR');
+  }
+}
+
+/**
+ * 缓存超时错误
+ */
+export class CacheTimeoutError extends CacheError {
+  constructor(message: string, context: ICacheContext) {
+    super(message, 'timeout', context, 'CACHE_TIMEOUT_ERROR');
+  }
+}
+
+/**
+ * 缓存序列化错误
+ */
+export class CacheSerializationError extends CacheError {
+  constructor(message: string, context: ICacheContext) {
+    super(message, 'serialization', context, 'CACHE_SERIALIZATION_ERROR');
+  }
+}
+
+/**
+ * 缓存访问拒绝错误
+ */
+export class CacheAccessDeniedError extends CacheError {
+  constructor(message: string, context: ICacheContext) {
+    super(message, 'access_denied', context, 'CACHE_ACCESS_DENIED');
+  }
+}
+
+/**
+ * 缓存操作错误
+ */
+export class CacheOperationError extends CacheError {
+  constructor(message: string, operation: string, context: ICacheContext) {
+    super(message, operation, context, 'CACHE_OPERATION_ERROR');
+  }
 }

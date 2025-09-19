@@ -20,12 +20,22 @@ export class BaseError extends Error {
   }
 }
 
-// 日志服务接口
+// 日志服务接口 - 现在使用logging模块的接口
 export interface ILoggerService {
   info(message: string, context?: unknown): void;
   error(message: string, error?: Error, context?: unknown): void;
   warn(message: string, context?: unknown): void;
   debug(message: string, context?: unknown): void;
+
+  // 企业级功能（可选）
+  child?(context: string, metadata?: Record<string, unknown>): ILoggerService;
+  performance?(
+    operation: string,
+    duration: number,
+    metadata?: Record<string, unknown>,
+  ): void;
+  flush?(): Promise<void>;
+  close?(): Promise<void>;
 }
 
 // 实体ID类型

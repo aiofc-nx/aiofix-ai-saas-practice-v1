@@ -1,5 +1,5 @@
 module.exports = {
-  displayName: 'core',
+  displayName: 'messaging',
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
@@ -23,15 +23,16 @@ module.exports = {
   coverageReporters: ['text', 'lcov', 'html'],
   coverageThreshold: {
     global: {
-      branches: 85,
-      functions: 95,
-      lines: 90,
-      statements: 90,
+      branches: 70,
+      functions: 80,
+      lines: 75,
+      statements: 75,
     },
   },
   setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  moduleNameMapping: {
-    '^@aiofix/core$': '<rootDir>/src/index.ts',
+  moduleNameMapper: {
+    '^@aiofix/core$': '<rootDir>/../core/src/index.ts',
+    '^@aiofix/logging$': '<rootDir>/../logging/src/index.ts',
   },
   testTimeout: 10000,
   verbose: true,

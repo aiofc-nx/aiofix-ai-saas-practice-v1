@@ -10,6 +10,7 @@
 import { Injectable } from '@nestjs/common';
 import type { ILoggerService } from '@aiofix/logging';
 import { v4 as uuidv4 } from 'uuid';
+import type { CoreConfigService } from '../config/core-config.service';
 import type {
   IPerformanceMonitor,
   IPerformanceCollector,
@@ -78,6 +79,7 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
 
   constructor(
     private readonly logger: ILoggerService,
+    private readonly configService?: CoreConfigService,
     configuration: Partial<IPerformanceMonitorConfiguration> = {},
   ) {
     this.configuration = {
@@ -145,6 +147,44 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
   }
 
   /**
+   * 初始化配置
+   *
+   * @description 从配置服务加载监控配置
+   */
+  private async initializeConfiguration(): Promise<void> {
+    if (!this.configService) {
+      console.log('CorePerformanceMonitor: 配置服务未设置，使用默认配置');
+      return;
+    }
+
+    try {
+      const monitoringConfig = await this.configService.getMonitoringConfig();
+
+      // 更新配置（基于实际的配置接口）
+      Object.assign(this.configuration, {
+        enabled: monitoringConfig.enabled,
+        monitoringInterval:
+          monitoringConfig.metricsInterval ||
+          this.configuration.monitoringInterval,
+        enableRealTimeMonitoring: monitoringConfig.enableTracing !== false,
+        enableAlerts: monitoringConfig.enableHealthCheck !== false,
+        enableAnalysis: true, // 暂时硬编码
+        enableReporting: true, // 暂时硬编码
+        enableMultiTenant: true, // 暂时硬编码
+      });
+
+      console.log('✅ CorePerformanceMonitor配置已加载', {
+        enabled: this.configuration.enabled,
+        interval: this.configuration.monitoringInterval,
+        realTime: this.configuration.enableRealTimeMonitoring,
+        alerts: this.configuration.enableAlerts,
+      });
+    } catch (error) {
+      console.error('加载监控配置失败:', error);
+    }
+  }
+
+  /**
    * 启动性能监控
    */
   public async start(): Promise<void> {
@@ -152,6 +192,9 @@ export class CorePerformanceMonitor implements IPerformanceMonitor {
       this.logger.warn('Performance monitor is already started');
       return;
     }
+
+    // 初始化配置
+    await this.initializeConfiguration();
 
     try {
       this.logger.info('Performance monitor started');

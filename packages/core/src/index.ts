@@ -24,5 +24,8 @@ export * from './application';
 // 领域层
 export * from './domain';
 
+// 对外类型导出（为其他模块提供统一的类型接口）
+export * from './types';
+
 // 共享层已合并到通用功能层
 // export * from './shared';

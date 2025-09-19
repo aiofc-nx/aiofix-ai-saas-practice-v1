@@ -17,6 +17,8 @@ import {
   MessageStatus,
 } from '../interfaces/messaging.interface';
 import { SimpleBullQueueAdapter } from '../adapters/simple-bull-queue.adapter';
+import { IMessagingLoggerService } from '../interfaces/messaging-logger.interface';
+import { createMessagingLogger } from '../factories/messaging-logger.factory';
 
 /**
  * 简化消息传递服务
@@ -24,12 +26,23 @@ import { SimpleBullQueueAdapter } from '../adapters/simple-bull-queue.adapter';
 @Injectable()
 export class SimpleMessagingService implements IMessagingService {
   private readonly queues = new Map<string, SimpleBullQueueAdapter>();
+  private readonly logger: IMessagingLoggerService;
 
-  constructor(queues: SimpleBullQueueAdapter[] = []) {
+  constructor(
+    queues: SimpleBullQueueAdapter[] = [],
+    logger?: IMessagingLoggerService,
+  ) {
+    this.logger = logger || createMessagingLogger('messaging-service');
+
     // 注册队列
     for (const queue of queues) {
       this.queues.set(queue.name, queue);
     }
+
+    this.logger.info('消息传递服务已初始化', {
+      queueCount: queues.length,
+      queues: queues.map((q) => q.name),
+    });
   }
 
   /**
@@ -50,8 +63,12 @@ export class SimpleMessagingService implements IMessagingService {
     const queue = this.getDefaultQueue();
     await queue.send(message, options);
 
-    // eslint-disable-next-line no-console
-    console.log(`消息已发送到主题 ${topic}`);
+    this.logger.info('消息已发送', {
+      messageId: message.id.toString(),
+      topic,
+      queue: queue.name,
+      messageType: message.type,
+    });
   }
 
   /**
@@ -72,8 +89,12 @@ export class SimpleMessagingService implements IMessagingService {
     const queue = this.getDefaultQueue();
     await queue.send(message, options);
 
-    // eslint-disable-next-line no-console
-    console.log(`事件已发布: ${eventType}`);
+    this.logger.info('事件已发布', {
+      messageId: message.id.toString(),
+      eventType,
+      queue: queue.name,
+      messageType: message.type,
+    });
   }
 
   /**
@@ -105,8 +126,13 @@ export class SimpleMessagingService implements IMessagingService {
     };
 
     const subscriptionId = await queue.subscribe(topic, messageHandler);
-    // eslint-disable-next-line no-console
-    console.log(`已订阅主题 ${topic}`);
+
+    this.logger.info('已订阅主题', {
+      topic,
+      subscriptionId,
+      queue: queue.name,
+      handlerName: messageHandler.name,
+    });
 
     return subscriptionId;
   }
@@ -117,8 +143,11 @@ export class SimpleMessagingService implements IMessagingService {
   async unsubscribe(subscriptionId: string): Promise<void> {
     const queue = this.getDefaultQueue();
     await queue.unsubscribe(subscriptionId);
-    // eslint-disable-next-line no-console
-    console.log(`已取消订阅 ${subscriptionId}`);
+
+    this.logger.info('已取消订阅', {
+      subscriptionId,
+      queue: queue.name,
+    });
   }
 
   /**
@@ -129,13 +158,21 @@ export class SimpleMessagingService implements IMessagingService {
     payload: unknown,
     timeout: number = 30000,
   ): Promise<T> {
-    // eslint-disable-next-line no-console
-    console.log(`发送请求到 ${topic}，超时 ${timeout}ms`);
+    this.logger.info('发送请求', {
+      topic,
+      timeout,
+      payloadType: typeof payload,
+    });
 
     // 模拟请求响应
     return new Promise((resolve) => {
       global.setTimeout(() => {
-        resolve({ success: true, data: payload } as T);
+        const result = { success: true, data: payload } as T;
+        this.logger.debug('请求响应完成', {
+          topic,
+          responseType: typeof result,
+        });
+        resolve(result);
       }, 100);
     });
   }
@@ -152,8 +189,11 @@ export class SimpleMessagingService implements IMessagingService {
       correlationId: message.correlationId,
     });
 
-    // eslint-disable-next-line no-console
-    console.log(`已回复请求: ${message.correlationId}`);
+    this.logger.info('已回复请求', {
+      correlationId: message.correlationId,
+      replyTo: message.replyTo,
+      responseType: typeof response,
+    });
   }
 
   /**
@@ -161,8 +201,12 @@ export class SimpleMessagingService implements IMessagingService {
    */
   registerQueue(queue: SimpleBullQueueAdapter): void {
     this.queues.set(queue.name, queue);
-    // eslint-disable-next-line no-console
-    console.log(`队列已注册: ${queue.name}`);
+
+    this.logger.info('队列已注册', {
+      queueName: queue.name,
+      queueType: queue.type,
+      totalQueues: this.queues.size,
+    });
   }
 
   /**

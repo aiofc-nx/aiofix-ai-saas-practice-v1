@@ -55,6 +55,7 @@
  * @since 1.0.0
  */
 import { Injectable } from '@nestjs/common';
+import type { CoreConfigService } from '../../../infrastructure/config/core-config.service';
 import type { BaseCommand } from '../commands/base/base-command';
 import type { BaseQuery, IQueryResult } from '../queries/base/base-query';
 import type { BaseDomainEvent } from '../../../domain/entities/base/base-domain-event';
@@ -106,7 +107,54 @@ export class CoreCQRSBus implements ICQRSBus {
     private readonly _commandBus: ICommandBus,
     private readonly _queryBus: IQueryBus,
     private readonly _eventBus: IEventBus,
+    private readonly configService?: CoreConfigService,
   ) {}
+
+  /**
+   * 获取CQRS配置
+   *
+   * @description 从配置服务获取CQRS配置
+   *
+   * @returns CQRS配置
+   */
+  private async getCQRSConfig(): Promise<{
+    enabled: boolean;
+    commandBus: { timeout: number; maxRetries: number };
+    queryBus: { enableCache: boolean; cacheTTL: number };
+    eventBus: { enableAsync: boolean; maxConcurrency: number };
+  } | null> {
+    if (!this.configService) {
+      console.log('CoreCQRSBus: 配置服务未设置，使用默认配置');
+      return {
+        enabled: true,
+        commandBus: { timeout: 30000, maxRetries: 3 },
+        queryBus: { enableCache: false, cacheTTL: 300000 },
+        eventBus: { enableAsync: true, maxConcurrency: 10 },
+      };
+    }
+
+    try {
+      const config = await this.configService.getCQRSConfig();
+      return {
+        enabled: config.enabled,
+        commandBus: {
+          timeout: config.commandBus?.timeout || 30000,
+          maxRetries: 3, // 暂时硬编码
+        },
+        queryBus: {
+          enableCache: config.queryBus?.enableCache || false,
+          cacheTTL: 300000, // 暂时硬编码
+        },
+        eventBus: {
+          enableAsync: !config.eventBus?.enablePersistence, // 基于现有字段推断
+          maxConcurrency: 10, // 暂时硬编码
+        },
+      };
+    } catch (error) {
+      console.error('获取CQRS配置失败:', error);
+      return null;
+    }
+  }
 
   /**
    * 获取命令总线
@@ -207,11 +255,22 @@ export class CoreCQRSBus implements ICQRSBus {
     }
 
     try {
-      // 这里可以添加初始化逻辑，比如：
-      // - 注册默认中间件
-      // - 设置监控
-      // - 预热缓存
-      // - 连接外部服务
+      // 加载CQRS配置
+      const config = await this.getCQRSConfig();
+
+      if (config && !config.enabled) {
+        console.log('CQRS功能已禁用，跳过初始化');
+        this._isInitialized = true;
+        return;
+      }
+
+      console.log('✅ CQRS总线配置已加载', config);
+
+      // 这里可以添加基于配置的初始化逻辑，比如：
+      // - 根据配置注册默认中间件
+      // - 基于配置设置监控
+      // - 根据配置预热缓存
+      // - 基于配置连接外部服务
 
       this._isInitialized = true;
     } catch (error) {

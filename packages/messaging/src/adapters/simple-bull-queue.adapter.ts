@@ -16,6 +16,8 @@ import {
   IQueueHealth,
   MessageStatus,
 } from '../interfaces/messaging.interface';
+import { IMessagingLoggerService } from '../interfaces/messaging-logger.interface';
+import { createQueueLogger } from '../factories/messaging-logger.factory';
 
 /**
  * 简化Bull队列配置
@@ -41,10 +43,15 @@ export class SimpleBullQueueAdapter implements IMessageQueue {
 
   private readonly stats: IQueueStatistics;
   private readonly handlers = new Map<string, IMessageHandler>();
+  private readonly logger: IMessagingLoggerService;
   private isStarted = false;
 
-  constructor(private readonly config: ISimpleBullConfig) {
+  constructor(
+    private readonly config: ISimpleBullConfig,
+    logger?: IMessagingLoggerService,
+  ) {
     this.name = config.name;
+    this.logger = logger || createQueueLogger(this.name);
 
     // 初始化统计信息
     this.stats = {
@@ -60,29 +67,34 @@ export class SimpleBullQueueAdapter implements IMessageQueue {
       errorRate: 0,
       lastUpdatedAt: new Date(),
     };
+
+    this.logger.info('Bull队列适配器已初始化', {
+      queueName: this.name,
+      config: {
+        enableTenantIsolation: config.enableTenantIsolation,
+        concurrency: config.concurrency,
+        redisHost: config.redis?.host,
+      },
+    });
   }
 
   async start(): Promise<void> {
     if (this.isStarted) {
-      // eslint-disable-next-line no-console
-      console.warn(`队列 ${this.name} 已经启动`);
+      this.logger.warn('队列已经启动', { queueName: this.name });
       return;
     }
 
-    // eslint-disable-next-line no-console
-    console.log(`启动Bull队列: ${this.name}`);
+    this.logger.info('启动Bull队列', { queueName: this.name });
     this.isStarted = true;
   }
 
   async stop(): Promise<void> {
     if (!this.isStarted) {
-      // eslint-disable-next-line no-console
-      console.warn(`队列 ${this.name} 未启动`);
+      this.logger.warn('队列未启动', { queueName: this.name });
       return;
     }
 
-    // eslint-disable-next-line no-console
-    console.log(`停止Bull队列: ${this.name}`);
+    this.logger.info('停止Bull队列', { queueName: this.name });
     this.isStarted = false;
   }
 
@@ -113,11 +125,12 @@ export class SimpleBullQueueAdapter implements IMessageQueue {
       enrichedMessage as unknown as { status: MessageStatus; sentAt: Date }
     ).sentAt = new Date();
 
-    // eslint-disable-next-line no-console
-    console.log(`消息已发送到队列 ${this.name}:`, {
+    this.logger.info('消息已发送到队列', {
       messageId: message.id.toString(),
       topic: message.topic,
-      type: message.type,
+      messageType: message.type,
+      queueName: this.name,
+      tenantId: enrichedMessage.tenantId,
     });
 
     // 更新统计
@@ -133,8 +146,11 @@ export class SimpleBullQueueAdapter implements IMessageQueue {
       await this.send(message, options);
     }
 
-    // eslint-disable-next-line no-console
-    console.log(`批量发送 ${messages.length} 条消息到队列 ${this.name}`);
+    this.logger.info('批量发送消息到队列', {
+      messageCount: messages.length,
+      queueName: this.name,
+      topics: messages.map((m) => m.topic),
+    });
   }
 
   async subscribe(topic: string, handler: IMessageHandler): Promise<string> {
@@ -145,8 +161,14 @@ export class SimpleBullQueueAdapter implements IMessageQueue {
     const subscriptionId = `${this.name}_${topic}_${Date.now()}`;
     this.handlers.set(subscriptionId, handler);
 
-    // eslint-disable-next-line no-console
-    console.log(`已订阅主题 ${topic}，订阅ID: ${subscriptionId}`);
+    this.logger.info('已订阅主题', {
+      topic,
+      subscriptionId,
+      handlerName: handler.name,
+      queueName: this.name,
+      totalHandlers: this.handlers.size,
+    });
+
     return subscriptionId;
   }
 
@@ -154,8 +176,17 @@ export class SimpleBullQueueAdapter implements IMessageQueue {
     const handler = this.handlers.get(subscriptionId);
     if (handler) {
       this.handlers.delete(subscriptionId);
-      // eslint-disable-next-line no-console
-      console.log(`已取消订阅: ${subscriptionId}`);
+      this.logger.info('已取消订阅', {
+        subscriptionId,
+        handlerName: handler.name,
+        queueName: this.name,
+        remainingHandlers: this.handlers.size,
+      });
+    } else {
+      this.logger.warn('订阅ID不存在', {
+        subscriptionId,
+        queueName: this.name,
+      });
     }
   }
 
@@ -165,8 +196,11 @@ export class SimpleBullQueueAdapter implements IMessageQueue {
   }
 
   async clear(topic?: string): Promise<number> {
-    // eslint-disable-next-line no-console
-    console.log(`清空队列 ${this.name}${topic ? ` 主题: ${topic}` : ''}`);
+    this.logger.info('清空队列', {
+      queueName: this.name,
+      topic: topic || 'all',
+      clearedMessages: 0,
+    });
     return 0;
   }
 

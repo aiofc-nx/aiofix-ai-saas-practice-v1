@@ -12,3 +12,6 @@ export * from './web';
 
 // 性能监控系统 - 已从core/monitoring/移动到此处
 export * from './monitoring';
+
+// 配置管理集成
+export * from './config';

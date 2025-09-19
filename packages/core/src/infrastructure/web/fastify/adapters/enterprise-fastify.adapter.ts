@@ -155,6 +155,7 @@
 
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { CoreFastifyAdapter } from './core-fastify.adapter';
+import type { CoreConfigService } from '../../config/core-config.service';
 import { ILoggerService } from '../types';
 
 /**
@@ -186,35 +187,121 @@ export class EnterpriseFastifyAdapter extends FastifyAdapter {
   private readonly enterpriseConfig: NonNullable<
     IEnterpriseFastifyOptions['enterprise']
   >;
+  private readonly configService?: CoreConfigService;
 
-  constructor(options?: IEnterpriseFastifyOptions) {
+  constructor(
+    options?: IEnterpriseFastifyOptions,
+    configService?: CoreConfigService,
+  ) {
     // 提取企业级配置，传递标准配置给父类
     const { enterprise, ...fastifyOptions } = options || {};
     super(fastifyOptions);
 
     this.enterpriseConfig = enterprise || {};
+    this.configService = configService;
 
-    // 如果启用了企业级功能，创建核心适配器
-    if (this.isEnterpriseEnabled()) {
-      try {
-        this.enterpriseCore = new CoreFastifyAdapter(
+    // 企业级功能将在异步初始化中创建
+    // 因为需要加载配置，而构造函数不能是异步的
+  }
+
+  /**
+   * 获取Web配置
+   *
+   * @description 从配置服务获取Web配置
+   *
+   * @returns Web配置
+   */
+  private async getWebConfig(): Promise<{
+    enabled: boolean;
+    fastify: {
+      enableEnterpriseAdapter: boolean;
+      enableCors: boolean;
+      enableRequestLogging: boolean;
+      enablePerformanceMonitoring: boolean;
+    };
+  } | null> {
+    if (!this.configService) {
+      console.log('EnterpriseFastifyAdapter: 配置服务未设置，使用默认配置');
+      return {
+        enabled: true,
+        fastify: {
+          enableEnterpriseAdapter: true,
+          enableCors: true,
+          enableRequestLogging: true,
+          enablePerformanceMonitoring: true,
+        },
+      };
+    }
+
+    try {
+      const config = await this.configService.getWebConfig();
+      return {
+        enabled: config.enabled,
+        fastify: {
+          enableEnterpriseAdapter: config.fastify.enableEnterpriseAdapter,
+          enableCors: config.fastify.enableCors,
+          enableRequestLogging: config.fastify.enableRequestLogging,
+          enablePerformanceMonitoring:
+            config.fastify.enablePerformanceMonitoring,
+        },
+      };
+    } catch (error) {
+      console.error('获取Web配置失败:', error);
+      return null;
+    }
+  }
+
+  /**
+   * 检查Web功能是否启用
+   *
+   * @description 基于配置检查Web功能是否启用
+   *
+   * @returns 是否启用Web功能
+   */
+  async isWebEnabled(): Promise<boolean> {
+    const config = await this.getWebConfig();
+    return config?.enabled ?? true;
+  }
+
+  /**
+   * 异步初始化企业级功能
+   *
+   * @description 基于配置异步初始化企业级功能
+   */
+  async initializeEnterpriseFeatures(): Promise<void> {
+    try {
+      const enabled = await this.isEnterpriseEnabled();
+
+      if (enabled && !this.enterpriseCore) {
+        const enterpriseCore = new CoreFastifyAdapter(
           this.createEnterpriseConfig(),
           this.enterpriseConfig.logger || this.createDefaultLogger(),
         );
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.warn(
-          '企业级功能初始化失败，使用标准模式:',
-          (error as Error).message,
-        );
+
+        // 将enterpriseCore赋值给readonly字段需要类型断言
+        (this as any).enterpriseCore = enterpriseCore;
+
+        console.log('✅ 企业级Fastify功能已初始化');
       }
+    } catch (error) {
+      console.warn(
+        '企业级功能初始化失败，使用标准模式:',
+        (error as Error).message,
+      );
     }
   }
 
   /**
    * 检查是否启用了企业级功能
    */
-  private isEnterpriseEnabled(): boolean {
+  private async isEnterpriseEnabled(): Promise<boolean> {
+    // 首先检查配置服务
+    const config = await this.getWebConfig();
+    if (config?.fastify.enableEnterpriseAdapter === false) {
+      return false;
+    }
+
+    // 然后检查选项配置
     return !!(
       this.enterpriseConfig.enableHealthCheck ||
       this.enterpriseConfig.enablePerformanceMonitoring ||
@@ -225,6 +312,7 @@ export class EnterpriseFastifyAdapter extends FastifyAdapter {
   /**
    * 创建企业级配置
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private createEnterpriseConfig(): any {
     return {
       server: {
@@ -289,12 +377,23 @@ export class EnterpriseFastifyAdapter extends FastifyAdapter {
 
   /**
    * 创建默认日志服务
+   *
+   * 使用logging模块的工厂创建优化的日志服务
    */
   private createDefaultLogger(): ILoggerService {
+    // 尝试使用logging模块的工厂
+    try {
+      // 这里可以集成@aiofix/logging模块
+      // const { createFastifyLogger } = require('@aiofix/logging');
+      // return createFastifyLogger();
+    } catch {
+      // 降级到简单实现
+    }
+
+    // 简单实现（保持向后兼容）
     return {
       // eslint-disable-next-line no-console
       info: (message: string) => console.log(`[INFO] ${message}`),
-      // eslint-disable-next-line no-console
       error: (message: string, error?: Error) =>
         // eslint-disable-next-line no-console
         console.error(`[ERROR] ${message}`, error),
@@ -302,12 +401,42 @@ export class EnterpriseFastifyAdapter extends FastifyAdapter {
       warn: (message: string) => console.warn(`[WARN] ${message}`),
       // eslint-disable-next-line no-console
       debug: (message: string) => console.debug(`[DEBUG] ${message}`),
+
+      // 企业级功能的简单实现
+      child: (context: string): ILoggerService => {
+        const childLogger = this.createDefaultLogger();
+        return {
+          ...childLogger,
+          info: (message: string) =>
+            childLogger.info(`[${context}] ${message}`),
+          error: (message: string, error?: Error) =>
+            childLogger.error(`[${context}] ${message}`, error),
+          warn: (message: string) =>
+            childLogger.warn(`[${context}] ${message}`),
+          debug: (message: string) =>
+            childLogger.debug(`[${context}] ${message}`),
+        };
+      },
+
+      performance: (operation: string, duration: number): void => {
+        // eslint-disable-next-line no-console
+        console.log(`[PERF] ${operation} completed in ${duration}ms`);
+      },
+
+      flush: async (): Promise<void> => {
+        // 控制台日志无需刷新
+      },
+
+      close: async (): Promise<void> => {
+        // 控制台日志无需关闭
+      },
     };
   }
 
   /**
    * 重写listen方法，添加企业级启动逻辑
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   override async listen(port: string | number, ...args: any[]): Promise<any> {
     // 启动企业级功能
     if (this.enterpriseCore) {
@@ -331,6 +460,7 @@ export class EnterpriseFastifyAdapter extends FastifyAdapter {
   /**
    * 重写close方法，添加企业级清理逻辑
    */
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   override async close(): Promise<any> {
     // 停止企业级功能
     if (this.enterpriseCore) {

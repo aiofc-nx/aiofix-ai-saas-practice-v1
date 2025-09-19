@@ -26,6 +26,14 @@ export * from './factories/pino-logger.factory';
 export * from './middleware/pino-logging.middleware';
 export * from './interceptors/pino-logging.interceptor';
 
+// Core模块集成导出
+export * from './interfaces/core-logger.interface';
+export * from './adapters/core-logger.adapter';
+export * from './factories/core-logger.factory';
+
+// 配置管理集成
+export * from './config';
+
 // 版本信息
 export const VERSION = '1.0.0';
 export const PACKAGE_NAME = '@aiofix/logging';
