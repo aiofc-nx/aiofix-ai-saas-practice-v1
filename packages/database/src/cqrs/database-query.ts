@@ -28,17 +28,17 @@
  * @since 1.0.0
  */
 
-import type { TenantContext } from '../interfaces/unified-database.interface';
+import type { TenantContext } from '../interfaces';
 import type {
   IDatabaseConnection,
-  QueryOptions,
-} from '../interfaces/unified-database.interface';
+  IQueryOptions,
+} from '../interfaces';
 import type { IDatabaseQuery } from './cqrs-database-manager';
 
 /**
  * 查询执行选项
  */
-export interface IQueryExecutionOptions extends QueryOptions {
+export interface IQueryExecutionOptions extends IQueryOptions {
   /** 连接名称 */
   connectionName?: string;
   /** 是否强制使用主数据库 */

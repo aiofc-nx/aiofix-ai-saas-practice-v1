@@ -15,18 +15,18 @@ import type {
   IDatabaseConnection,
   ITransaction,
   IExecuteResult,
-  QueryOptions,
-  ExecuteOptions,
-  TransactionOptions,
+  IQueryOptions,
+  IExecuteOptions,
+  ITransactionOptions,
   IDatabaseStats,
   IDatabaseHealth,
-} from '../interfaces/unified-database.interface';
+} from '../interfaces';
 
 import {
   DatabaseConnectionError,
   DatabaseQueryError,
   DatabaseTransactionError,
-} from '../interfaces/unified-database.interface';
+} from '../interfaces';
 
 /* eslint-disable no-console, @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 /**
@@ -78,7 +78,7 @@ export class SimpleDatabaseManager implements IDatabaseService {
   async query<T>(
     sql: string,
     params?: any[],
-    options?: QueryOptions,
+    options?: IQueryOptions,
   ): Promise<T[]> {
     await this.ensureInitialized();
     const startTime = performance.now();
@@ -113,7 +113,7 @@ export class SimpleDatabaseManager implements IDatabaseService {
   async execute(
     sql: string,
     params?: any[],
-    options?: ExecuteOptions,
+    options?: IExecuteOptions,
   ): Promise<IExecuteResult> {
     await this.ensureInitialized();
     const startTime = performance.now();
@@ -161,7 +161,7 @@ export class SimpleDatabaseManager implements IDatabaseService {
    */
   async executeTransaction<T>(
     operation: (trx: ITransaction) => Promise<T>,
-    options?: TransactionOptions,
+    options?: ITransactionOptions,
   ): Promise<T> {
     await this.ensureInitialized();
     const startTime = performance.now();

@@ -7,8 +7,8 @@
  * @since 1.0.0
  */
 
-// 导出核心接口和类型
-export * from './interfaces/unified-database.interface';
+// 导出核心接口和类型（已拆分为多个文件，提高可维护性）
+export * from './interfaces';
 
 // 导出核心服务（第一阶段：简化版本）
 export { SimpleDatabaseManager } from './core/simple-database-manager';

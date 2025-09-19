@@ -34,8 +34,8 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import type { TenantContext } from '../interfaces/unified-database.interface';
-import type { ITransaction } from '../interfaces/unified-database.interface';
+import type { TenantContext } from '../interfaces';
+import type { ITransaction } from '../interfaces';
 import type { IEventStore, IDomainEvent } from './cqrs-database-manager';
 
 /**

@@ -26,14 +26,14 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import type { TenantContext } from '../interfaces/unified-database.interface';
+import type { TenantContext } from '../interfaces';
 import type {
   IDatabaseIsolationStrategy,
   ICleanupResult,
   IDatabaseConnection,
-} from '../interfaces/unified-database.interface';
+} from '../interfaces';
 
-import { DatabaseIsolationLevel } from '../interfaces/unified-database.interface';
+import { DatabaseIsolationLevel } from '../interfaces';
 
 /**
  * 数据库隔离配置接口

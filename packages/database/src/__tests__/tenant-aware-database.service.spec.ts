@@ -11,7 +11,7 @@ import {
   DatabaseIsolationStrategy,
   DEFAULT_ISOLATION_CONFIG,
 } from '../strategies/database-isolation.strategy';
-import { DatabaseIsolationLevel } from '../interfaces/unified-database.interface';
+import { DatabaseIsolationLevel } from '../interfaces';
 
 // Mock基础数据库服务
 const mockBaseDatabaseService = {

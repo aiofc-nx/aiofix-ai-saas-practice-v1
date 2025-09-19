@@ -5,7 +5,7 @@
  * @since 1.0.0
  */
 
-export * from './database';
+// Database功能通过@aiofix/database模块提供，不在Core模块中重复实现
 export * from './messaging';
 export * from './storage';
 export * from './web';

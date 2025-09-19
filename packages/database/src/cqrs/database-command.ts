@@ -27,8 +27,8 @@
  * @since 1.0.0
  */
 
-import type { TenantContext } from '../interfaces/unified-database.interface';
-import type { ITransaction } from '../interfaces/unified-database.interface';
+import type { TenantContext } from '../interfaces';
+import type { ITransaction } from '../interfaces';
 import type { IDatabaseCommand, IDomainEvent } from './cqrs-database-manager';
 
 /**

@@ -41,8 +41,8 @@ import type {
   IDatabaseConnection,
   ITransaction,
   IExecuteResult,
-  QueryOptions,
-} from '../interfaces/unified-database.interface';
+  IQueryOptions,
+} from '../interfaces';
 
 /**
  * 数据库命令接口
@@ -320,7 +320,7 @@ export class CQRSDatabaseManager {
    */
   async executeQuery<T>(
     query: IDatabaseQuery<T>,
-    options?: QueryOptions & { connectionName?: string },
+    options?: IQueryOptions & { connectionName?: string },
   ): Promise<IQueryResult<T>> {
     await this.ensureInitialized();
     const startTime = performance.now();

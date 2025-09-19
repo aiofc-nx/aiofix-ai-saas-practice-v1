@@ -34,11 +34,11 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import type { TenantContext } from '../interfaces/unified-database.interface';
+import type { TenantContext } from '../interfaces';
 import type {
   IDatabaseConnection,
   ITransaction,
-} from '../interfaces/unified-database.interface';
+} from '../interfaces';
 
 /**
  * 分布式操作接口

@@ -84,6 +84,13 @@
     // ES模块互操作性
     // 业务规则：支持ES模块和CommonJS的混合使用
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
+    "allowSyntheticDefaultImports": true,
+    "paths": {
+      "@aiofix/config": ["../../packages/config/src"],
+      "@aiofix/core": ["../../packages/core/src"],
+      "@aiofix/database": ["../../packages/database/src"],
+      "@aiofix/messaging": ["../../packages/messaging/src"],
+      "@aiofix/cache": ["../../packages/cache/src"]
+    }
   }
 }

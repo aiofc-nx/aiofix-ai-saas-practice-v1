@@ -35,7 +35,7 @@
 
 /* eslint-disable no-console, @typescript-eslint/no-explicit-any */
 import { Injectable } from '@nestjs/common';
-import type { TenantContext } from '../interfaces/unified-database.interface';
+import type { TenantContext } from '../interfaces';
 
 /**
  * 查询执行计划

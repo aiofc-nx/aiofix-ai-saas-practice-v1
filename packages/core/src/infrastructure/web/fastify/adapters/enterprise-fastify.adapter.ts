@@ -153,9 +153,10 @@
  * @since 1.0.0
  */
 
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { CoreFastifyAdapter } from './core-fastify.adapter';
-import type { CoreConfigService } from '../../config/core-config.service';
+import type { CoreConfigService } from '../../../config/core-config.service';
 import { ILoggerService } from '../types';
 
 /**

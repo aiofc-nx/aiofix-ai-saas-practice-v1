@@ -34,13 +34,13 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import type { TenantContext } from '../interfaces/unified-database.interface';
+import type { TenantContext } from '../interfaces';
 import type {
   IRepository,
   ITenantAwareRepository,
-  QueryOptions,
-  QueryCriteria,
-} from '../interfaces/unified-database.interface';
+  IQueryOptions,
+  IQueryCriteria,
+} from '../interfaces';
 import type { IEntityMetadata } from '../decorators/repository.decorators';
 import { DecoratorMetadataUtils } from '../decorators/repository.decorators';
 
@@ -143,7 +143,7 @@ export abstract class BaseRepository<T>
    * @param options - 查询选项
    * @returns 实体列表
    */
-  async findAll(options?: QueryOptions): Promise<T[]> {
+  async findAll(options?: IQueryOptions): Promise<T[]> {
     console.log(`Repository查找所有: ${this.entityClass.name}`, options);
 
     try {
@@ -192,7 +192,10 @@ export abstract class BaseRepository<T>
    * @param options - 查询选项
    * @returns 实体列表
    */
-  async findBy(criteria: QueryCriteria, options?: QueryOptions): Promise<T[]> {
+  async findBy(
+    criteria: IQueryCriteria,
+    options?: IQueryOptions,
+  ): Promise<T[]> {
     console.log(`Repository条件查找: ${this.entityClass.name}`, {
       criteria,
       options,
@@ -352,7 +355,7 @@ export abstract class BaseRepository<T>
    * @param criteria - 查询条件
    * @returns 实体数量
    */
-  async count(criteria?: QueryCriteria): Promise<number> {
+  async count(criteria?: IQueryCriteria): Promise<number> {
     console.log(`Repository计数: ${this.entityClass.name}`, criteria);
 
     try {
@@ -393,8 +396,8 @@ export abstract class BaseRepository<T>
    * 根据租户查找实体
    */
   async findByTenant(
-    criteria?: QueryCriteria,
-    options?: QueryOptions,
+    criteria?: IQueryCriteria,
+    options?: IQueryOptions,
   ): Promise<T[]> {
     console.log(`Repository租户查找: ${this.entityClass.name}`, {
       tenantId: this.context.tenantContext?.tenantId,
@@ -461,7 +464,7 @@ export abstract class BaseRepository<T>
   /**
    * 租户实体计数
    */
-  async countByTenant(criteria?: QueryCriteria): Promise<number> {
+  async countByTenant(criteria?: IQueryCriteria): Promise<number> {
     console.log(`Repository租户计数: ${this.entityClass.name}`, {
       tenantId: this.context.tenantContext?.tenantId,
       criteria,

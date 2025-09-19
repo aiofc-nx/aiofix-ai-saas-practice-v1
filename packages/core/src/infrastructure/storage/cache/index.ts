@@ -1,27 +1,12 @@
 /**
- * 缓存集成导出
+ * 缓存集成说明
  *
- * @description 集成@aiofix/cache模块，提供缓存功能的统一接口
+ * @description Core模块不重复导出缓存功能，请直接使用@aiofix/cache模块
  * @since 1.0.0
  */
 
-// 重新导出@aiofix/cache模块的核心功能（基于当前可用的导出）
-export type {
-  ICacheService,
-  ICacheOptions,
-  ICacheHealth,
-  ISimpleCacheConfig,
-  ISimpleCacheModuleOptions,
-} from '@aiofix/cache';
+// 缓存功能由@aiofix/cache模块提供，请直接导入：
+// import { SimpleCacheManager, SimpleCacheModule } from '@aiofix/cache';
 
-export {
-  SimpleCacheManager,
-  SimpleCacheConfigService,
-  createSimpleCacheConfigService,
-  SimpleCacheModule,
-  InjectSimpleCacheManager,
-  InjectSimpleCacheConfig,
-  CacheIsolationStrategy,
-  createCacheIsolationStrategy,
-  TenantAwareCacheKeyBuilder,
-} from '@aiofix/cache';
+// 避免重复导出，保持模块边界清晰
+// Core模块专注于架构抽象，具体缓存实现由Cache模块提供

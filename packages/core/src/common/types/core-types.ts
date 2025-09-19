@@ -14,14 +14,10 @@ export type { ITenantContextData as TenantContext } from '../multi-tenant/contex
 export type {
   IsolationLevel,
   DataSensitivity,
-  IDataIsolationContext,
+  DataIsolationContext,
 } from '../multi-tenant/isolation/isolation-context';
 
-// 重新导出错误处理相关类型
-export type {
-  IErrorContext,
-  IErrorMetadata,
-} from '../error-handling/error-context.interface';
+// 错误处理相关类型在error-handling.interface中定义
 
 // 重新导出性能监控相关类型
 export type {
@@ -31,9 +27,4 @@ export type {
   IBusinessMetrics,
 } from '../../infrastructure/monitoring/performance-metrics.interface';
 
-// 重新导出CQRS相关类型
-export type {
-  ICommandMetadata,
-  IQueryMetadata,
-  IEventMetadata,
-} from '../../application/cqrs/interfaces/cqrs.interface';
+// CQRS相关类型在各自的总线接口中定义

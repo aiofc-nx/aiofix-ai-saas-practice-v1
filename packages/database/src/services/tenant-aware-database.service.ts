@@ -1,3 +1,4 @@
+/* eslint-disable no-console, @typescript-eslint/no-explicit-any */
 /**
  * 租户感知数据库服务
  *
@@ -30,19 +31,19 @@
  */
 
 import { Injectable } from '@nestjs/common';
-import type { TenantContext } from '../interfaces/unified-database.interface';
+import type { TenantContext } from '../interfaces';
 import type {
   ITenantAwareDatabaseService,
   IDatabaseService,
   IDatabaseConnection,
   ITransaction,
   IExecuteResult,
-  QueryOptions,
-  ExecuteOptions,
-  TransactionOptions,
+  IQueryOptions,
+  IExecuteOptions,
+  ITransactionOptions,
   ICleanupResult,
   ITenantAwareRepository,
-} from '../interfaces/unified-database.interface';
+} from '../interfaces';
 import type { DatabaseIsolationStrategy } from '../strategies/database-isolation.strategy';
 
 /**
@@ -86,7 +87,7 @@ export class TenantAwareDatabaseService implements ITenantAwareDatabaseService {
   async query<T>(
     sql: string,
     params?: any[],
-    options?: QueryOptions,
+    options?: IQueryOptions,
   ): Promise<T[]> {
     const tenantContext = await this.getCurrentTenantContext();
 
@@ -126,7 +127,7 @@ export class TenantAwareDatabaseService implements ITenantAwareDatabaseService {
   async execute(
     sql: string,
     params?: any[],
-    options?: ExecuteOptions,
+    options?: IExecuteOptions,
   ): Promise<IExecuteResult> {
     const tenantContext = await this.getCurrentTenantContext();
 
@@ -191,7 +192,7 @@ export class TenantAwareDatabaseService implements ITenantAwareDatabaseService {
    */
   async executeTransaction<T>(
     operation: (trx: ITransaction) => Promise<T>,
-    options?: TransactionOptions,
+    options?: ITransactionOptions,
   ): Promise<T> {
     const tenantContext = await this.getCurrentTenantContext();
 

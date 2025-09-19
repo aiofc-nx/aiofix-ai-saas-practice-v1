@@ -36,8 +36,8 @@
 /* eslint-disable no-console, @typescript-eslint/no-explicit-any */
 import { Injectable } from '@nestjs/common';
 import { performance } from 'perf_hooks';
-import type { TenantContext } from '../interfaces/unified-database.interface';
-import type { IDatabaseConnection } from '../interfaces/unified-database.interface';
+import type { TenantContext } from '../interfaces';
+import type { IDatabaseConnection } from '../interfaces';
 
 /**
  * 连接池配置

@@ -28,13 +28,13 @@
  * @since 1.0.0
  */
 
-import type { TenantContext } from '../interfaces/unified-database.interface';
+import type { TenantContext } from '../interfaces';
 import type {
   IDistributedOperation,
   ISagaDefinition,
   ISagaStep,
 } from './distributed-transaction-manager';
-import type { ITransaction } from '../interfaces/unified-database.interface';
+import type { ITransaction } from '../interfaces';
 
 /**
  * Saga步骤状态
